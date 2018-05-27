@@ -1,31 +1,36 @@
 {
-  "name": "@atomist/atomist-sdm",
-  "version": "0.1.2",
+  "name": "@atomist/demo-sdm",
+  "version": "0.1.0",
   "description": "an Atomist SDM to deliver automation client projects",
   "author": "Atomist, Inc.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/atomist/atomist-sdm.git"
+    "url": "https://github.com/atomist/demo-sdm.git"
   },
   "keywords": [
     "atomist",
     "automation",
-    "github"
+    "github",
+    "kubernetes",
+    "sdm"
   ],
-  "homepage": "https://github.com/atomist/atomist-sdm#readme",
+  "homepage": "https://github.com/atomist/demo-sdm#readme",
   "bugs": {
-    "url": "https://github.com/atomist/atomist-sdm/issues"
+    "url": "https://github.com/atomist/demo-sdm/issues"
   },
   "dependencies": {
     "@atomist/automation-client": "^0.16.0",
     "@atomist/clj-editors": "0.0.19",
     "@atomist/sdm": "^0.1.1",
     "@atomist/slack-messages": "^0.12.1",
+    "@atomist/spring-automation": "^0.7.0-20180522124026",
+    "@typed/curry": "^1.0.1",
     "fs-extra": "^6.0.0",
     "lodash": "^4.17.10",
     "logzio-nodejs": "^0.4.10",
     "serialize-error": "^2.1.0",
+    "tslint": "^5.9.1",
     "uuid": "^3.2.1",
     "winston-logzio": "^1.0.6"
   },
@@ -46,7 +51,6 @@
     "rimraf": "^2.6.2",
     "supervisor": "^0.12.0",
     "ts-node": "^3.3.0",
-    "tslint": "^5.9.1",
     "typedoc": "^0.11.1",
     "typescript": "2.8.3",
     "typescript-formatter": "^7.2.0"

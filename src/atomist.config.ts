@@ -20,14 +20,12 @@ import {
     configureSdm,
 } from "@atomist/sdm";
 import { machine } from "./machine/machine";
-import { configureLogzio } from "./util/logzio";
 
 const machineOptions: ConfigureOptions = {
     requiredConfigurationValues: [
         "sdm",
-        "sdm.npm.npmrc",
-        "sdm.npm.registry",
-        "sdm.npm.access",
+        "sdm.docker",
+        "sdm.docker.hub",
         "sdm.docker.hub.registry",
         "sdm.docker.hub.user",
         "sdm.docker.hub.password",
@@ -36,7 +34,6 @@ const machineOptions: ConfigureOptions = {
 
 export const configuration: Configuration = {
     postProcessors: [
-        configureLogzio,
         configureSdm(machine, machineOptions),
     ],
 };
