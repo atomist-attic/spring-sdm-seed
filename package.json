@@ -1,5 +1,5 @@
 {
-  "name": "@atomist/demo-sdm",
+  "name": "@atomistplay/demo-sdm",
   "version": "0.1.0",
   "description": "an Atomist SDM to deliver automation client projects",
   "author": "Atomist, Inc.",
