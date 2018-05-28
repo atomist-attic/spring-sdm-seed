@@ -74,7 +74,6 @@ function kubernetesDataFromGoal(
 
 function namespaceFromGoal(goal: SdmGoal): string {
     const name = goal.repo.name;
-    logger.debug(`Namespace goal repo name: ${name}`);
     if (name === "k8-automation") {
         return "k8-automation";
     } else if (/-(?:sdm|automation)$/.test(name)) {
