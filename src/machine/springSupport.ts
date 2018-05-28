@@ -217,11 +217,7 @@ function kubernetesDataFromGoal(
 
 function namespaceFromGoal(goal: SdmGoal): string {
     const name = goal.repo.name;
-    if (/-sdm$/.test(name)) {
-        return "sdm";
-    } else if (name === "k8-automation") {
-        return "k8-automation";
-    } else if (goal.environment === StagingEnvironment.replace(/\/$/, "")) {
+    if (goal.environment === StagingEnvironment.replace(/\/$/, "")) {
         return "testing";
     } else if (goal.environment === ProductionEnvironment.replace(/\/$/, "")) {
         return "production";

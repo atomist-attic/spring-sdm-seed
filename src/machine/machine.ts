@@ -72,7 +72,7 @@ export function machine(
             .setGoals(NoGoals),
         // Simplified deployment goalset for demo-sdm that skips testing deploy
         whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
-            IsSimplifiedDeployment("demo-sdm"))
+            IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
             .itMeans("Simplified Deploy")
             .setGoals(SimplifiedKubernetesDeployGoals),
         whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
