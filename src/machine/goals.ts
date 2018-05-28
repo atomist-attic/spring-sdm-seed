@@ -70,11 +70,11 @@ export const ProductionDeploymentGoal = new Goal({
 export const ReleaseArtifactGoal = new Goal({
     uniqueName: "ReleaseArtifact",
     environment: ProductionEnvironment,
-    orderedName: "3-release-npm",
-    displayName: "release NPM package",
-    workingDescription: "Releasing NPM package...",
-    completedDescription: "Released NPM package",
-    failedDescription: "Release NPM package failure",
+    orderedName: "3-release-artifact",
+    displayName: "release artifact",
+    workingDescription: "Releasing artifact...",
+    completedDescription: "Released artifact",
+    failedDescription: "Release artifact failure",
     isolated: true,
 });
 

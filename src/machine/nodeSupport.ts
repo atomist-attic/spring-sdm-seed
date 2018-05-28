@@ -187,10 +187,10 @@ function kubernetesDataFromGoal(
 
 function namespaceFromGoal(goal: SdmGoal): string {
     const name = goal.repo.name;
-    if (name === "atomist-sdm") {
-        return "sdm";
-    } else if (name === "k8-automation") {
+    if (name === "k8-automation") {
         return "k8-automation";
+    } else if (/-(?:sdm|automation)$/.test(name)) {
+        return "sdm";
     } else if (goal.environment === StagingEnvironment.replace(/\/$/, "")) {
         return "testing";
     } else if (goal.environment === ProductionEnvironment.replace(/\/$/, "")) {

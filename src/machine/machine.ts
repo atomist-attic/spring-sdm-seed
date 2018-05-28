@@ -40,8 +40,10 @@ import { addDockerfile } from "../commands/addDockerfile";
 import {
     IsSimplifiedDeployment,
 } from "../support/isSimplifiedDeployment";
-import { MaterialChangeToJavaRepo } from "../support/materialChangeToJavaRepo";
-import { MaterialChangeToNodeRepo } from "../support/materialChangeToNodeRepo";
+import {
+    MaterialChangeToJvmRepo,
+    MaterialChangeToNodeRepo,
+} from "../support/materialChangeToRepo";
 import { HasSpringBootApplicationClass } from "../support/springPushTests";
 import {
     BuildGoals,
@@ -90,7 +92,7 @@ export function machine(
             .setGoals(BuildGoals),
 
         // Spring
-        whenPushSatisfies(IsMaven, not(MaterialChangeToJavaRepo))
+        whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
             .itMeans("No material change to Java")
             .setGoals(NoGoals),
         whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,

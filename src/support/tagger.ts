@@ -14,14 +14,34 @@
  * limitations under the License.
  */
 
-import { HandlerContext } from "@atomist/automation-client";
-import { Tags } from "@atomist/automation-client/operations/tagger/Tagger";
+import {
+    HandlerContext,
+    logger,
+} from "@atomist/automation-client";
+import {
+    DefaultTags,
+    Tags,
+} from "@atomist/automation-client/operations/tagger/Tagger";
 import { Project } from "@atomist/automation-client/project/Project";
 
 export const AutomationClientTagger: (p: Project, context: HandlerContext, params?: any) => Promise<Tags> =
     async p => {
-        return {
-            repoId: p.id,
-            tags: ["atomist", "nodejs", "typescript", "automation"],
-        };
+        try {
+            const pjf = await p.findFile("package.json");
+            const pjc = await pjf.getContent();
+            const pj = JSON.parse(pjc);
+            if (pj.dependencies && pj.dependencies["@atomist/automation-client"]) {
+                return {
+                    repoId: p.id,
+                    tags: ["atomist", "nodejs", "typescript", "automation"],
+                };
+            }
+            return {
+                repoId: p.id,
+                tags: ["nodejs"],
+            };
+        } catch (e) {
+            logger.debug(`Tag error: does not appear to be a Node.js project: ${e.message}`);
+            return new DefaultTags(p.id, []);
+        }
     };

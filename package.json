@@ -27,7 +27,7 @@
     "@atomist/spring-automation": "^0.7.0-20180522124026",
     "@typed/curry": "^1.0.1",
     "dateformat": "^3.0.3",
-    "fs-extra": "^6.0.0",
+    "fs-extra": "^6.0.1",
     "lodash": "^4.17.10",
     "logzio-nodejs": "^0.4.10",
     "serialize-error": "^2.1.0",
