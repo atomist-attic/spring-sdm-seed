@@ -70,7 +70,7 @@ export function machine(
         whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
             .itMeans("No Material Change")
             .setGoals(NoGoals),
-        // Simplified deployment goalset for SDMs and automation clients
+        // Simplified deployment for SDMs and automation clients
         whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
             IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
             .itMeans("Simplified Deploy")
