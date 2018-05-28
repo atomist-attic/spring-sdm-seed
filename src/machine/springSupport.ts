@@ -24,7 +24,9 @@ import {
     allSatisfied,
     branchFromCommit,
     createEphemeralProgressLog,
+    DelimitedWriteProgressLogDecorator,
     ExecuteGoalResult,
+    ExecuteGoalWithLog,
     hasFile,
     LocalDeploymentGoal,
     LocalEndpointGoal,
@@ -66,6 +68,8 @@ import { springBootGenerator } from "../commands/springBootGenerator";
 import { mavenSourceDeployer } from "../support/localSpringBootDeployers";
 import {
     ProductionDeploymentGoal,
+    PublishGoal,
+    ReleaseArtifactGoal,
     ReleaseDockerGoal,
     ReleaseTagGoal,
     ReleaseVersionGoal,
@@ -109,6 +113,17 @@ async function mvnPackagePreparation(p: GitProject, rwlc: RunWithLogContext): Pr
 
 const MavenPreparations = [mvnVersionPreparation, mvnPackagePreparation];
 
+function noOpImplementation(action: string): ExecuteGoalWithLog {
+    return async (rwlc: RunWithLogContext): Promise<ExecuteGoalResult> => {
+        const log = new DelimitedWriteProgressLogDecorator(rwlc.progressLog, "\n");
+        const message = `${action} requires no implementation`;
+        log.write(message);
+        log.flush();
+        log.close();
+        return Promise.resolve({ code: 0, message });
+    };
+}
+
 export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Configuration) {
 
     sdm.addBuildRules(
@@ -127,6 +142,9 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
                     ...configuration.sdm.docker.hub as DockerOptions,
                     dockerfileFinder: async () => "Dockerfile",
                 }), { pushTest: IsMaven })
+        .addGoalImplementation("mvnPublish", PublishGoal, noOpImplementation("Publish"), { pushTest: IsMaven })
+        .addGoalImplementation("mvnArtifactRelease", ReleaseArtifactGoal, noOpImplementation("ReleaseArtifact"),
+            { pushTest: IsMaven })
         .addGoalImplementation("mvnDockerRelease", ReleaseDockerGoal,
             executeReleaseDocker(sdm.opts.projectLoader,
                 DockerReleasePreparations,
@@ -216,7 +234,6 @@ function kubernetesDataFromGoal(
 }
 
 function namespaceFromGoal(goal: SdmGoal): string {
-    const name = goal.repo.name;
     if (goal.environment === StagingEnvironment.replace(/\/$/, "")) {
         return "testing";
     } else if (goal.environment === ProductionEnvironment.replace(/\/$/, "")) {
