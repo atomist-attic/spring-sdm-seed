@@ -54,8 +54,9 @@ function kubernetesDataFromGoal(
 ): Promise<SdmGoal> {
 
     const ns = namespaceFromGoal(goal);
+    const name = goal.repo.name;
     const options: KubernetesOptions = {
-        name: goal.repo.name,
+        name,
         environment: configuration.environment,
         ns,
         replicas: 1,
