@@ -16,7 +16,6 @@
 
 import {
     Configuration,
-    logger,
 } from "@atomist/automation-client";
 import { GitHubRepoRef } from "@atomist/automation-client/operations/common/GitHubRepoRef";
 import { GitProject } from "@atomist/automation-client/project/git/GitProject";
@@ -33,18 +32,14 @@ import {
     LocalUndeploymentGoal,
     ManagedDeploymentTargeter,
     MavenBuilder,
-    ProductionEnvironment,
     ProjectVersioner,
     readSdmVersion,
     RunWithLogContext,
     SoftwareDeliveryMachine,
-    SoftwareDeliveryMachineOptions,
-    StagingEnvironment,
     tagRepo,
 } from "@atomist/sdm";
 import * as build from "@atomist/sdm/blueprint/dsl/buildDsl";
 import * as deploy from "@atomist/sdm/blueprint/dsl/deployDsl";
-import { RepoContext } from "@atomist/sdm/common/context/SdmContext";
 import { MavenProjectIdentifier } from "@atomist/sdm/common/delivery/build/local/maven/pomParser";
 import { executeVersioner } from "@atomist/sdm/common/delivery/build/local/projectVersioner";
 import {
@@ -58,8 +53,6 @@ import {
 } from "@atomist/sdm/common/delivery/goals/common/commonGoals";
 import { IsMaven } from "@atomist/sdm/common/listener/support/pushtest/jvm/jvmPushTests";
 import { listLocalDeploys } from "@atomist/sdm/handlers/commands/listLocalDeploys";
-import { createKubernetesData } from "@atomist/sdm/handlers/events/delivery/goals/k8s/launchGoalK8";
-import { SdmGoal } from "@atomist/sdm/ingesters/sdmGoalIngester";
 import { spawnAndWatch } from "@atomist/sdm/util/misc/spawned";
 import { springBootTagger } from "@atomist/spring-automation/commands/tag/springTagger";
 import * as df from "dateformat";
@@ -75,6 +68,7 @@ import {
     ReleaseVersionGoal,
     StagingDeploymentGoal,
 } from "./goals";
+import { kubernetesDataCallback } from "./kubeSupport";
 import {
     DockerReleasePreparations,
     executeReleaseDocker,
@@ -118,8 +112,8 @@ function noOpImplementation(action: string): ExecuteGoalWithLog {
         const log = new DelimitedWriteProgressLogDecorator(rwlc.progressLog, "\n");
         const message = `${action} requires no implementation`;
         log.write(message);
-        log.flush();
-        log.close();
+        await log.flush();
+        await log.close();
         return Promise.resolve({ code: 0, message });
     };
 }
@@ -188,58 +182,11 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
 
         .addFullfillmentCallback({
             goal: StagingDeploymentGoal,
-            callback: kubernetesDataCallback(sdm.opts, configuration),
+            callback: kubernetesDataCallback("maven", sdm.opts, configuration),
         })
         .addFullfillmentCallback({
             goal: ProductionDeploymentGoal,
-            callback: kubernetesDataCallback(sdm.opts, configuration),
+            callback: kubernetesDataCallback("maven", sdm.opts, configuration),
         });
 
-}
-
-function kubernetesDataCallback(
-    options: SoftwareDeliveryMachineOptions,
-    configuration: Configuration,
-): (goal: SdmGoal, context: RepoContext) => Promise<SdmGoal> {
-
-    return async (goal, ctx) => {
-        return options.projectLoader.doWithProject({
-            credentials: ctx.credentials, id: ctx.id, context: ctx.context, readOnly: true,
-        }, async p => {
-            return kubernetesDataFromGoal(goal, p, configuration);
-        });
-    };
-}
-
-function kubernetesDataFromGoal(
-    goal: SdmGoal,
-    p: GitProject,
-    configuration: Configuration,
-): Promise<SdmGoal> {
-
-    const ns = namespaceFromGoal(goal);
-    const name = goal.repo.name;
-    return createKubernetesData(
-        goal,
-        {
-            name,
-            environment: configuration.environment,
-            port: 8080,
-            ns,
-            replicas: 1,
-            path: `/${name}`,
-            host: `play.atomist.${(ns === "testing") ? "io" : "com"}`,
-        },
-        p);
-}
-
-function namespaceFromGoal(goal: SdmGoal): string {
-    if (goal.environment === StagingEnvironment.replace(/\/$/, "")) {
-        return "testing";
-    } else if (goal.environment === ProductionEnvironment.replace(/\/$/, "")) {
-        return "production";
-    } else {
-        logger.debug(`Unmatched goal.environment using default namespace: ${goal.environment}`);
-        return "default";
-    }
 }

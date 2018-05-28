@@ -16,21 +16,15 @@
 
 import {
     Configuration,
-    logger,
 } from "@atomist/automation-client";
-import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
     allSatisfied,
     hasFile,
     nodeBuilder,
     not,
-    ProductionEnvironment,
     SoftwareDeliveryMachine,
-    SoftwareDeliveryMachineOptions,
-    StagingEnvironment,
 } from "@atomist/sdm";
 import * as build from "@atomist/sdm/blueprint/dsl/buildDsl";
-import { RepoContext } from "@atomist/sdm/common/context/SdmContext";
 import {
     executePublish,
     NpmOptions,
@@ -52,8 +46,6 @@ import {
 } from "@atomist/sdm/common/delivery/goals/common/commonGoals";
 import { IsNode } from "@atomist/sdm/common/listener/support/pushtest/node/nodePushTests";
 import { tagRepo } from "@atomist/sdm/common/listener/support/tagRepo";
-import { createKubernetesData } from "@atomist/sdm/handlers/events/delivery/goals/k8s/launchGoalK8";
-import { SdmGoal } from "@atomist/sdm/ingesters/sdmGoalIngester";
 import { AutomationClientTagger } from "../support/tagger";
 import {
     ProductionDeploymentGoal,
@@ -65,6 +57,7 @@ import {
     ReleaseVersionGoal,
     StagingDeploymentGoal,
 } from "./goals";
+import { kubernetesDataCallback } from "./kubeSupport";
 import {
     DockerReleasePreparations,
     DocsReleasePreparations,
@@ -139,64 +132,15 @@ export function addNodeSupport(sdm: SoftwareDeliveryMachine, configuration: Conf
 
         .addFullfillmentCallback({
             goal: StagingDeploymentGoal,
-            callback: kubernetesDataCallback(sdm.opts, configuration),
+            callback: kubernetesDataCallback("node", sdm.opts, configuration),
         })
         .addFullfillmentCallback({
             goal: ProductionDeploymentGoal,
-            callback: kubernetesDataCallback(sdm.opts, configuration),
+            callback: kubernetesDataCallback("node", sdm.opts, configuration),
         });
 
     sdm.addNewRepoWithCodeActions(tagRepo(AutomationClientTagger))
         .addAutofixes(tslintFix)
         .addFingerprinterRegistrations(new PackageLockFingerprinter());
 
-}
-
-function kubernetesDataCallback(
-    options: SoftwareDeliveryMachineOptions,
-    configuration: Configuration,
-): (goal: SdmGoal, context: RepoContext) => Promise<SdmGoal> {
-
-    return async (goal, ctx) => {
-        return options.projectLoader.doWithProject({
-            credentials: ctx.credentials, id: ctx.id, context: ctx.context, readOnly: true,
-        }, async p => {
-            return kubernetesDataFromGoal(goal, p, configuration);
-        });
-    };
-}
-
-function kubernetesDataFromGoal(
-    goal: SdmGoal,
-    p: GitProject,
-    configuration: Configuration,
-): Promise<SdmGoal> {
-
-    const ns = namespaceFromGoal(goal);
-    return createKubernetesData(
-        goal,
-        {
-            name: goal.repo.name,
-            environment: configuration.environment,
-            port: 2866,
-            ns,
-            replicas: 1,
-        },
-        p);
-}
-
-function namespaceFromGoal(goal: SdmGoal): string {
-    const name = goal.repo.name;
-    if (name === "k8-automation") {
-        return "k8-automation";
-    } else if (/-(?:sdm|automation)$/.test(name)) {
-        return "sdm";
-    } else if (goal.environment === StagingEnvironment.replace(/\/$/, "")) {
-        return "testing";
-    } else if (goal.environment === ProductionEnvironment.replace(/\/$/, "")) {
-        return "production";
-    } else {
-        logger.debug(`Unmatched goal.environment using default namespace: ${goal.environment}`);
-        return "default";
-    }
 }
