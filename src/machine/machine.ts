@@ -16,125 +16,103 @@
 
 import { Configuration } from "@atomist/automation-client";
 import {
-    DoNotSetAnyGoals,
     executeTag,
+    FromAtomist,
     IsAtomistAutomationClient,
-    IsLein,
     not,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineOptions,
     TagGoal,
     ToDefaultBranch,
+    ToPublicRepo,
     whenPushSatisfies,
 } from "@atomist/sdm";
 import { NoGoals } from "@atomist/sdm/common/delivery/goals/common/commonGoals";
-import { HasTravisFile } from "@atomist/sdm/common/listener/support/pushtest/ci/ciPushTests";
 import { IsDeployEnabled } from "@atomist/sdm/common/listener/support/pushtest/deployPushTests";
 import { HasDockerfile } from "@atomist/sdm/common/listener/support/pushtest/docker/dockerPushTests";
+import { IsMaven } from "@atomist/sdm/common/listener/support/pushtest/jvm/jvmPushTests";
 import { IsNode } from "@atomist/sdm/common/listener/support/pushtest/node/nodePushTests";
 import {
     disableDeploy,
     enableDeploy,
 } from "@atomist/sdm/handlers/commands/SetDeployEnablement";
+import { addDockerfile } from "../commands/addDockerfile";
 import {
     IsSimplifiedDeployment,
-    IsTeam,
 } from "../support/isSimplifiedDeployment";
-import { MaterialChangeToClojureRepo } from "../support/materialChangeToClojureRepo";
+import { MaterialChangeToJavaRepo } from "../support/materialChangeToJavaRepo";
 import { MaterialChangeToNodeRepo } from "../support/materialChangeToNodeRepo";
+import { HasSpringBootApplicationClass } from "../support/springPushTests";
 import {
     BuildGoals,
     BuildReleaseGoals,
-    CheckGoals,
     DockerGoals,
     DockerReleaseGoals,
     KubernetesDeployGoals,
-    LeinDockerGoals,
+    LocalDeploymentGoals,
     SimplifiedKubernetesDeployGoals,
-    StagingKubernetesDeployGoals,
 } from "./goals";
-import { addLeinSupport } from "./leinSupport";
 import { addNodeSupport } from "./nodeSupport";
+import { addSpringSupport } from "./springSupport";
 
-export function machine(options: SoftwareDeliveryMachineOptions,
-                        configuration: Configuration): SoftwareDeliveryMachine {
+export function machine(
+    options: SoftwareDeliveryMachineOptions,
+    configuration: Configuration,
+): SoftwareDeliveryMachine {
+
     const sdm = new SoftwareDeliveryMachine(
         "Atomist Software Delivery Machine",
         options,
 
-        whenPushSatisfies(not(IsLein), IsTeam("T095SFFBK"))
-            .itMeans("Non Clojure repository in Atomist team")
-            .setGoals(DoNotSetAnyGoals),
-
-        whenPushSatisfies(not(IsNode), IsTeam("T29E48P34"))
-            .itMeans("Non Node repository in Community team")
-            .setGoals(DoNotSetAnyGoals),
-
         // Node
-
         whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
             .itMeans("No Material Change")
             .setGoals(NoGoals),
-
-        whenPushSatisfies(IsNode, HasTravisFile)
-            .itMeans("Just Checking")
-            .setGoals(CheckGoals),
-
-        // Simplified deployment goalset for automation-client-sdm and k8-automation; we are skipping
-        // testing for these and deploying straight into their respective namespaces
+        // Simplified deployment goalset for demo-sdm that skips testing deploy
         whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
-            IsSimplifiedDeployment("k8-automation", "atomist-sdm"))
+            IsSimplifiedDeployment("demo-sdm"))
             .itMeans("Simplified Deploy")
             .setGoals(SimplifiedKubernetesDeployGoals),
-
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsAtomistAutomationClient,
-            IsSimplifiedDeployment("sample-sdm"))
-            .itMeans("Staging Deploy")
-            .setGoals(StagingKubernetesDeployGoals),
-
         whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
             .itMeans("Deploy")
             .setGoals(KubernetesDeployGoals),
-
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
-            .itMeans("Deploy")
-            .setGoals(KubernetesDeployGoals),
-
         whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsAtomistAutomationClient)
             .itMeans("Docker Release Build")
             .setGoals(DockerReleaseGoals),
-
         whenPushSatisfies(IsNode, HasDockerfile, IsAtomistAutomationClient)
             .itMeans("Docker Build")
             .setGoals(DockerGoals),
-
         whenPushSatisfies(IsNode, not(HasDockerfile), ToDefaultBranch)
             .itMeans("Release Build")
             .setGoals(BuildReleaseGoals),
-
         whenPushSatisfies(IsNode, not(HasDockerfile))
             .itMeans("Build")
             .setGoals(BuildGoals),
 
-        // Clojure
-
-        whenPushSatisfies(IsLein, not(HasTravisFile), not(MaterialChangeToClojureRepo))
-            .itMeans("No material change")
+        // Spring
+        whenPushSatisfies(IsMaven, not(MaterialChangeToJavaRepo))
+            .itMeans("No material change to Java")
             .setGoals(NoGoals),
-
-        whenPushSatisfies(IsLein, not(HasTravisFile), ToDefaultBranch, MaterialChangeToClojureRepo)
-            .itMeans("Build a Clojure Service with Leinigen")
-            .setGoals(LeinDockerGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
+            not(FromAtomist), IsDeployEnabled)
+            .itMeans("Spring Boot service to deploy")
+            .setGoals(KubernetesDeployGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
+            .itMeans("Spring Boot service to Dockerize")
+            .setGoals(DockerGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, not(FromAtomist))
+            .itMeans("Spring Boot service local deploy")
+            .setGoals(LocalDeploymentGoals),
 
     );
 
-    sdm.addSupportingCommands(enableDeploy, disableDeploy);
+    sdm.addSupportingCommands(enableDeploy, disableDeploy, () => addDockerfile);
 
     sdm.addGoalImplementation("tag", TagGoal,
         executeTag(sdm.opts.projectLoader));
 
     addNodeSupport(sdm, configuration);
-    addLeinSupport(sdm, configuration);
+    addSpringSupport(sdm, configuration);
 
     return sdm;
 }

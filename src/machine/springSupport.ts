@@ -21,26 +21,22 @@ import {
 import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
     allSatisfied,
+    branchFromCommit,
+    ExecuteGoalResult,
     hasFile,
     nodeBuilder,
-    not,
     ProductionEnvironment,
+    ProjectVersioner,
+    readSdmVersion,
+    RunWithLogContext,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineOptions,
     StagingEnvironment,
 } from "@atomist/sdm";
 import * as build from "@atomist/sdm/blueprint/dsl/buildDsl";
 import { RepoContext } from "@atomist/sdm/common/context/SdmContext";
-import {
-    executePublish,
-    NpmOptions,
-} from "@atomist/sdm/common/delivery/build/local/npm/executePublish";
-import { NodeProjectIdentifier } from "@atomist/sdm/common/delivery/build/local/npm/nodeProjectIdentifier";
-import { NodeProjectVersioner } from "@atomist/sdm/common/delivery/build/local/npm/nodeProjectVersioner";
-import { NpmPreparations } from "@atomist/sdm/common/delivery/build/local/npm/npmBuilder";
+import { MavenProjectIdentifier } from "@atomist/sdm/common/delivery/build/local/maven/pomParser";
 import { executeVersioner } from "@atomist/sdm/common/delivery/build/local/projectVersioner";
-import { tslintFix } from "@atomist/sdm/common/delivery/code/autofix/node/tslint";
-import { PackageLockFingerprinter } from "@atomist/sdm/common/delivery/code/fingerprint/node/PackageLockFingerprinter";
 import {
     DefaultDockerImageNameCreator,
     DockerOptions,
@@ -50,90 +46,91 @@ import {
     DockerBuildGoal,
     VersionGoal,
 } from "@atomist/sdm/common/delivery/goals/common/commonGoals";
-import { IsNode } from "@atomist/sdm/common/listener/support/pushtest/node/nodePushTests";
-import { tagRepo } from "@atomist/sdm/common/listener/support/tagRepo";
+import { IsMaven } from "@atomist/sdm/common/listener/support/pushtest/jvm/jvmPushTests";
 import { createKubernetesData } from "@atomist/sdm/handlers/events/delivery/goals/k8s/launchGoalK8";
 import { SdmGoal } from "@atomist/sdm/ingesters/sdmGoalIngester";
-import { AutomationClientTagger } from "../support/tagger";
+import { spawnAndWatch } from "@atomist/sdm/util/misc/spawned";
+import * as df from "dateformat";
 import {
     ProductionDeploymentGoal,
-    PublishGoal,
-    ReleaseArtifactGoal,
     ReleaseDockerGoal,
-    ReleaseDocsGoal,
     ReleaseTagGoal,
     ReleaseVersionGoal,
     StagingDeploymentGoal,
 } from "./goals";
 import {
     DockerReleasePreparations,
-    DocsReleasePreparations,
     executeReleaseDocker,
-    executeReleaseDocs,
-    executeReleaseNpm,
     executeReleaseTag,
     executeReleaseVersion,
-    NpmReleasePreparations,
 } from "./release";
 
-export function addNodeSupport(sdm: SoftwareDeliveryMachine, configuration: Configuration) {
+const MavenProjectVersioner: ProjectVersioner = async (status, p, log) => {
+    const projectId = await MavenProjectIdentifier(p);
+    const branch = branchFromCommit(status.commit).split("/").join(".");
+    const branchSuffix = (branch !== status.commit.repo.defaultBranch) ? `${branch}.` : "";
+    const version = `${projectId.version}-${branchSuffix}${df(new Date(), "yyyymmddHHMMss")}`;
+    return version;
+};
 
-    const hasPackageLock = hasFile("package-lock.json");
+async function mvnVersionPreparation(p: GitProject, rwlc: RunWithLogContext): Promise<ExecuteGoalResult> {
+    const commit = rwlc.status.commit;
+    const version = await readSdmVersion(
+        commit.repo.owner,
+        commit.repo.name,
+        commit.repo.org.provider.providerId,
+        commit.sha,
+        branchFromCommit(commit),
+        rwlc.context);
+    return spawnAndWatch({
+        command: "mvn",
+        args: ["versions:set", `-DnewVersion="${version}"`, "versions:commit"],
+    },
+        {
+            cwd: p.baseDir,
+        },
+        rwlc.progressLog);
+}
+
+const MavenPreparations = [mvnVersionPreparation];
+
+export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Configuration) {
 
     sdm.addBuildRules(
-        build.when(IsNode, hasPackageLock)
-            .itMeans("npm run build")
-            .set(nodeBuilder(sdm.opts.projectLoader, "npm ci", "npm run build")),
-        build.when(IsNode, not(hasPackageLock))
-            .itMeans("npm run build (no package-lock.json)")
-            .set(nodeBuilder(sdm.opts.projectLoader, "npm install", "npm run build")));
+        build.when(IsMaven)
+            .itMeans("mvn test") // mvn package -Ddockerfile.skip=true
+            .set(nodeBuilder(sdm.opts.projectLoader, "mvn test")));
 
-    sdm.addGoalImplementation("nodeVersioner", VersionGoal,
-        executeVersioner(sdm.opts.projectLoader, NodeProjectVersioner), { pushTest: IsNode })
-        .addGoalImplementation("nodeDockerBuild", DockerBuildGoal,
+    sdm.addGoalImplementation("mvnVersioner", VersionGoal,
+        executeVersioner(sdm.opts.projectLoader, MavenProjectVersioner), { pushTest: IsMaven })
+        .addGoalImplementation("mvnDockerBuild", DockerBuildGoal,
             executeDockerBuild(
                 sdm.opts.projectLoader,
                 DefaultDockerImageNameCreator,
-                NpmPreparations,
+                MavenPreparations,
                 {
                     ...configuration.sdm.docker.hub as DockerOptions,
                     dockerfileFinder: async () => "Dockerfile",
-                }), { pushTest: IsNode })
-        .addGoalImplementation("nodePublish", PublishGoal,
-            executePublish(sdm.opts.projectLoader,
-                NodeProjectIdentifier,
-                NpmPreparations,
-                {
-                    ...configuration.sdm.npm as NpmOptions,
-                }), { pushTest: IsNode })
-        .addGoalImplementation("nodeNpmRelease", ReleaseArtifactGoal,
-            executeReleaseNpm(sdm.opts.projectLoader,
-                NodeProjectIdentifier,
-                NpmReleasePreparations,
-                {
-                    ...configuration.sdm.npm as NpmOptions,
-                }), { pushTest: IsNode })
-        .addGoalImplementation("nodeDockerRelease", ReleaseDockerGoal,
+                }), { pushTest: IsMaven })
+        .addGoalImplementation("mvnDockerRelease", ReleaseDockerGoal,
             executeReleaseDocker(sdm.opts.projectLoader,
                 DockerReleasePreparations,
                 {
                     ...configuration.sdm.docker.hub as DockerOptions,
-                }), { pushTest: allSatisfied(IsNode, hasFile("Dockerfile")) })
+                }), { pushTest: allSatisfied(IsMaven, hasFile("Dockerfile")) })
         .addGoalImplementation("tagRelease", ReleaseTagGoal, executeReleaseTag(sdm.opts.projectLoader))
-        .addGoalImplementation("nodeDocsRelease", ReleaseDocsGoal,
-            executeReleaseDocs(sdm.opts.projectLoader, DocsReleasePreparations), { pushTest: IsNode })
-        .addGoalImplementation("nodeVersionRelease", ReleaseVersionGoal,
-            executeReleaseVersion(sdm.opts.projectLoader, NodeProjectIdentifier), { pushTest: IsNode });
+        .addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
+            executeReleaseVersion(sdm.opts.projectLoader, MavenProjectIdentifier), { pushTest: IsMaven });
 
     sdm.goalFulfillmentMapper
         .addSideEffect({
             goal: StagingDeploymentGoal,
-            pushTest: IsNode,
+            pushTest: IsMaven,
             sideEffectName: "@atomist/k8-automation",
         })
         .addSideEffect({
             goal: ProductionDeploymentGoal,
-            pushTest: IsNode,
+            pushTest: IsMaven,
             sideEffectName: "@atomist/k8-automation",
         })
 
@@ -145,10 +142,6 @@ export function addNodeSupport(sdm: SoftwareDeliveryMachine, configuration: Conf
             goal: ProductionDeploymentGoal,
             callback: kubernetesDataCallback(sdm.opts, configuration),
         });
-
-    sdm.addNewRepoWithCodeActions(tagRepo(AutomationClientTagger))
-        .addAutofixes(tslintFix)
-        .addFingerprinterRegistrations(new PackageLockFingerprinter());
 
 }
 
@@ -178,16 +171,17 @@ function kubernetesDataFromGoal(
         {
             name: goal.repo.name,
             environment: configuration.environment,
-            port: 2866,
+            port: 8080,
             ns,
             replicas: 1,
+            host: "play.atomist." + (ns === "testing") ? "services" : "com",
         },
         p);
 }
 
 function namespaceFromGoal(goal: SdmGoal): string {
     const name = goal.repo.name;
-    if (name === "atomist-sdm") {
+    if (/-sdm$/.test(name)) {
         return "sdm";
     } else if (name === "k8-automation") {
         return "k8-automation";

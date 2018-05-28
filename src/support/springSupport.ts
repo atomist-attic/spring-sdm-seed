@@ -29,8 +29,8 @@ import { IsMaven } from "@atomist/sdm/common/listener/support/pushtest/jvm/jvmPu
 import { tagRepo } from "@atomist/sdm/common/listener/support/tagRepo";
 import { listLocalDeploys } from "@atomist/sdm/handlers/commands/listLocalDeploys";
 import { springBootTagger } from "@atomist/spring-automation/commands/tag/springTagger";
+import { springBootGenerator } from "../commands/springBootGenerator";
 import { mavenSourceDeployer } from "./localSpringBootDeployers";
-import { springBootGenerator } from "./springBootGenerator";
 
 /**
  * Configuration common to Spring SDMs, wherever they deploy
@@ -53,7 +53,7 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
         .addGenerators(() => springBootGenerator({
             addAtomistWebhook: false,
             groupId: "atomist",
-            seed: new GitHubRepoRef("spring-team", "spring-rest-seed"),
+            seed: new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
             intent: "create spring",
         }))
         .addNewRepoWithCodeActions(

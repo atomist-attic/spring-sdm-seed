@@ -26,7 +26,7 @@ import {
     springBootGenerator,
     SpringProjectCreationParameters,
     transformSeedToCustomProject,
-} from "../../src/support/springBootGenerator";
+} from "../../src/commands/springBootGenerator";
 import { fakeContext } from "../FakeContext";
 
 describe("springBootGenerator", () => {

@@ -129,9 +129,11 @@ function toInitialCap(s: string) {
  * @param details allow customization
  * @return {HandleCommand<SpringProjectCreationParameters>}
  */
-export function springBootGenerator(config: JavaGeneratorConfig,
-    // tslint:disable-next-line:max-line-length
-                                    details: Partial<GeneratorCommandDetails<SpringProjectCreationParameters>> = {}): HandleCommand<SpringProjectCreationParameters> {
+export function springBootGenerator(
+    config: JavaGeneratorConfig,
+    details: Partial<GeneratorCommandDetails<SpringProjectCreationParameters>> = {},
+): HandleCommand<SpringProjectCreationParameters> {
+
     return generatorHandler<SpringProjectCreationParameters>(
         (params, ctx) => chainEditors(
             replaceReadmeTitle(params),
@@ -140,7 +142,6 @@ export function springBootGenerator(config: JavaGeneratorConfig,
         ),
         () => {
             const p = new SpringProjectCreationParameters(config);
-            // p.target = new BitBucketRepoCreationParameters();
             return p;
         },
         `springBootGenerator-${config.seed.repo}`,

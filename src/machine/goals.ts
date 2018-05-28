@@ -23,7 +23,10 @@ import {
     Goals,
     GoalWithPrecondition,
     IndependentOfEnvironment,
+    LocalDeploymentGoal,
+    LocalEndpointGoal,
     ProductionEnvironment,
+    PushReactionGoal,
     ReviewGoal,
     StagingEnvironment,
 } from "@atomist/sdm";
@@ -64,8 +67,8 @@ export const ProductionDeploymentGoal = new Goal({
     failedDescription: "Prod deployment failure",
 });
 
-export const ReleaseNpmGoal = new Goal({
-    uniqueName: "ReleaseNpm",
+export const ReleaseArtifactGoal = new Goal({
+    uniqueName: "ReleaseArtifact",
     environment: ProductionEnvironment,
     orderedName: "3-release-npm",
     displayName: "release NPM package",
@@ -141,8 +144,8 @@ export const BuildReleaseGoals = new Goals(
     BuildGoal,
     new GoalWithPrecondition({ ...PublishGoal.definition, approvalRequired: true }, ...PublishGoal.dependsOn),
     TagGoal,
-    new GoalWithPrecondition(ReleaseNpmGoal.definition, PublishGoal),
-    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseNpmGoal),
+    new GoalWithPrecondition(ReleaseArtifactGoal.definition, PublishGoal),
+    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseArtifactGoal),
     new GoalWithPrecondition(ReleaseDocsGoal.definition, PublishGoal),
     ReleaseVersionGoal,
 );
@@ -161,10 +164,10 @@ export const DockerReleaseGoals = new Goals(
     BuildGoal,
     new GoalWithPrecondition({ ...PublishGoal.definition, approvalRequired: true }, ...PublishGoal.dependsOn),
     new GoalWithPrecondition(TagGoal.definition, BuildGoal),
-    new GoalWithPrecondition(ReleaseNpmGoal.definition, PublishGoal),
+    new GoalWithPrecondition(ReleaseArtifactGoal.definition, PublishGoal),
     new GoalWithPrecondition({ ...DockerBuildGoal.definition, approvalRequired: true }, ...DockerBuildGoal.dependsOn),
     new GoalWithPrecondition(ReleaseDockerGoal.definition, DockerBuildGoal),
-    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseNpmGoal, ReleaseDockerGoal),
+    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseArtifactGoal, ReleaseDockerGoal),
     new GoalWithPrecondition(ReleaseDocsGoal.definition, DockerBuildGoal),
     ReleaseVersionGoal,
 );
@@ -179,9 +182,9 @@ export const KubernetesDeployGoals = new Goals(
     TagGoal,
     StagingDeploymentGoal,
     new GoalWithPrecondition(ProductionDeploymentGoal.definition, StagingDeploymentGoal),
-    new GoalWithPrecondition(ReleaseNpmGoal.definition, StagingDeploymentGoal),
+    new GoalWithPrecondition(ReleaseArtifactGoal.definition, StagingDeploymentGoal),
     new GoalWithPrecondition(ReleaseDockerGoal.definition, StagingDeploymentGoal),
-    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseNpmGoal, ReleaseDockerGoal),
+    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseArtifactGoal, ReleaseDockerGoal),
     new GoalWithPrecondition(ReleaseDocsGoal.definition, StagingDeploymentGoal),
     ReleaseVersionGoal,
 );
@@ -195,9 +198,9 @@ export const SimplifiedKubernetesDeployGoals = new Goals(
     DockerBuildGoal,
     TagGoal,
     new GoalWithPrecondition({ ...ProductionDeploymentGoal.definition, approvalRequired: true }, DockerBuildGoal),
-    new GoalWithPrecondition(ReleaseNpmGoal.definition, ProductionDeploymentGoal),
+    new GoalWithPrecondition(ReleaseArtifactGoal.definition, ProductionDeploymentGoal),
     new GoalWithPrecondition(ReleaseDockerGoal.definition, ProductionDeploymentGoal),
-    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseNpmGoal, ReleaseDockerGoal),
+    new GoalWithPrecondition(ReleaseTagGoal.definition, ReleaseArtifactGoal, ReleaseDockerGoal),
     new GoalWithPrecondition(ReleaseDocsGoal.definition, ProductionDeploymentGoal),
     ReleaseVersionGoal,
 );
@@ -228,4 +231,11 @@ export const LeinDockerGoals = new Goals(
     DockerBuildGoal,
     TagGoal,
     new GoalWithPrecondition(LibraryPublished.definition, TagGoal),
+);
+
+export const LocalDeploymentGoals = new Goals(
+    "Local Deployment",
+    PushReactionGoal,
+    LocalDeploymentGoal,
+    LocalEndpointGoal,
 );
