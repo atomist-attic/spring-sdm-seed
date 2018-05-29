@@ -52,7 +52,6 @@ import {
     DockerGoals,
     DockerReleaseGoals,
     KubernetesDeployGoals,
-    LocalDeploymentGoals,
     ProductionDeploymentGoal,
     SimplifiedKubernetesDeployGoals,
     StagingDeploymentGoal,
@@ -106,9 +105,9 @@ export function machine(
         whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
             .itMeans("Spring Boot service to Dockerize")
             .setGoals(DockerGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, not(FromAtomist))
-            .itMeans("Spring Boot service local deploy")
-            .setGoals(LocalDeploymentGoals),
+        whenPushSatisfies(IsMaven, not(HasDockerfile))
+            .itMeans("Build")
+            .setGoals(BuildGoals),
 
     );
 

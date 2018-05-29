@@ -27,10 +27,6 @@ import {
     ExecuteGoalResult,
     ExecuteGoalWithLog,
     hasFile,
-    LocalDeploymentGoal,
-    LocalEndpointGoal,
-    LocalUndeploymentGoal,
-    ManagedDeploymentTargeter,
     MavenBuilder,
     ProjectVersioner,
     readSdmVersion,
@@ -39,7 +35,6 @@ import {
     tagRepo,
 } from "@atomist/sdm";
 import * as build from "@atomist/sdm/blueprint/dsl/buildDsl";
-import * as deploy from "@atomist/sdm/blueprint/dsl/deployDsl";
 import { MavenProjectIdentifier } from "@atomist/sdm/common/delivery/build/local/maven/pomParser";
 import { executeVersioner } from "@atomist/sdm/common/delivery/build/local/projectVersioner";
 import {
@@ -58,11 +53,11 @@ import { springBootTagger } from "@atomist/spring-automation/commands/tag/spring
 import * as df from "dateformat";
 import { SuggestAddingDockerfile } from "../commands/addDockerfile";
 import { springBootGenerator } from "../commands/springBootGenerator";
-import { mavenSourceDeployer } from "../support/localSpringBootDeployers";
 import {
     PublishGoal,
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
+    ReleaseDocsGoal,
     ReleaseTagGoal,
     ReleaseVersionGoal,
 } from "./goals";
@@ -143,19 +138,11 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
                     ...configuration.sdm.docker.hub as DockerOptions,
                 }), { pushTest: allSatisfied(IsMaven, hasFile("Dockerfile")) })
         .addGoalImplementation("tagRelease", ReleaseTagGoal, executeReleaseTag(sdm.opts.projectLoader))
+        .addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal, noOpImplementation("ReleaseDocs"), { pushTest: IsMaven })
         .addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
             executeReleaseVersion(sdm.opts.projectLoader, MavenProjectIdentifier), { pushTest: IsMaven });
 
-    sdm.addDeployRules(
-        deploy.when(IsMaven)
-            .itMeans("Maven local deploy")
-            .deployTo(LocalDeploymentGoal, LocalEndpointGoal, LocalUndeploymentGoal)
-            .using({
-                deployer: mavenSourceDeployer(sdm.opts.projectLoader),
-                targeter: ManagedDeploymentTargeter,
-            }),
-    )
-        .addSupportingCommands(listLocalDeploys)
+    sdm.addSupportingCommands(listLocalDeploys)
         .addGenerators(() => springBootGenerator({
             addAtomistWebhook: false,
             groupId: "atomist",
