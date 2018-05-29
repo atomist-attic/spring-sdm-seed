@@ -39,8 +39,8 @@ export const addDockerfile: HandleCommand = editorCommand(
         editMode: () => new PullRequest(
             "add-dockerfile",
             "Add Dockerfile",
-            "Add Dockerfile to project.",
-            "Add Dockerfile\n\n[atomist]",
+            "Add Dockerfile to project\n\n[atomist:generated]",
+            "Add Dockerfile\n\n[atomist:generated]",
         ),
     });
 
