@@ -45,7 +45,7 @@ export function kubernetesDataCallback(
     };
 }
 
-function kubernetesDataFromGoal(
+async function kubernetesDataFromGoal(
     goal: SdmGoal,
     p: GitProject,
     configuration: Configuration,
@@ -67,9 +67,41 @@ function kubernetesDataFromGoal(
         options.host = `play.atomist.${(ns === "testing") ? "io" : "com"}`;
         options.protocol = "https";
         (options as any).tlsSecret = options.host.replace(/\./g, "-").replace("play", "star");
+
+        const kubeGoal = await createKubernetesData(goal, options, p);
+        const goalData = JSON.parse(kubeGoal.data);
+
+        if (goalData && goalData.kubernetes) {
+            const kubeData = goalData.kubernetes;
+            if (!kubeData.deploymentSpec) {
+
+                const deploymentSpec = {
+                    spec: {
+                        template: {
+                            spec: {
+                                containers: [{
+                                        env: [{
+                                            name: "ATOMIST_TEAM",
+                                            value: configuration.teamIds[0], // this only works for non-global SDMs
+                                        }, {
+                                            name: "ATOMIST_ENVIRONMENT",
+                                            value: `${configuration.environment}:${ns}`,
+                                        }],
+                                    }],
+                            },
+                        },
+                    },
+                };
+
+                kubeData.deploymentSpec = JSON.stringify(deploymentSpec);
+                goalData.kubernetes = kubeData;
+                kubeGoal.data = JSON.stringify(goalData);
+            }
+        }
     }
     logger.debug(`Kubernetes goal options: ${JSON.stringify(options)}`);
-    return createKubernetesData(goal, options, p);
+
+    return;
 }
 
 function namespaceFromGoal(goal: SdmGoal): string {
