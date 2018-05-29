@@ -44,11 +44,6 @@ import {
     RunWithLogContext,
 } from "@atomist/sdm";
 import {
-    DockerBuildGoal,
-    TagGoal,
-    VersionGoal,
-} from "@atomist/sdm/common/delivery/goals/common/commonGoals";
-import {
     createRelease,
     createStatus,
 } from "@atomist/sdm/util/github/ghub";
