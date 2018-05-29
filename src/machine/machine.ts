@@ -66,8 +66,23 @@ export function machine(
 ): SoftwareDeliveryMachine {
 
     const sdm = new SoftwareDeliveryMachine(
-        "Atomist Software Delivery Machine",
+        "Kubernetes Demo Software Delivery Machine",
         options,
+
+        // Spring
+        whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
+            .itMeans("No material change to Java")
+            .setGoals(NoGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
+            not(FromAtomist), IsDeployEnabled)
+            .itMeans("Spring Boot service to deploy")
+            .setGoals(KubernetesDeployGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
+            .itMeans("Spring Boot service to Dockerize")
+            .setGoals(DockerGoals),
+        whenPushSatisfies(IsMaven, not(HasDockerfile))
+            .itMeans("Build")
+            .setGoals(BuildGoals),
 
         // Node
         whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
@@ -91,21 +106,6 @@ export function machine(
             .itMeans("Release Build")
             .setGoals(BuildReleaseGoals),
         whenPushSatisfies(IsNode, not(HasDockerfile))
-            .itMeans("Build")
-            .setGoals(BuildGoals),
-
-        // Spring
-        whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
-            .itMeans("No material change to Java")
-            .setGoals(NoGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
-            not(FromAtomist), IsDeployEnabled)
-            .itMeans("Spring Boot service to deploy")
-            .setGoals(KubernetesDeployGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
-            .itMeans("Spring Boot service to Dockerize")
-            .setGoals(DockerGoals),
-        whenPushSatisfies(IsMaven, not(HasDockerfile))
             .itMeans("Build")
             .setGoals(BuildGoals),
 
