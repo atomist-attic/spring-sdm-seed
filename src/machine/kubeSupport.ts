@@ -59,8 +59,10 @@ async function kubernetesDataFromGoal(
         ns,
         replicas: 1,
     };
+    let kubeGoal;
     if (p.fileExistsSync("package.json")) {
         options.port = 2866;
+        kubeGoal = await createKubernetesData(goal, options, p);
     } else if (p.fileExistsSync("pom.xml")) {
         options.port = 8080;
         options.path = `/${name}`;
@@ -68,7 +70,7 @@ async function kubernetesDataFromGoal(
         options.protocol = "https";
         (options as any).tlsSecret = options.host.replace(/\./g, "-").replace("play", "star");
 
-        const kubeGoal = await createKubernetesData(goal, options, p);
+        kubeGoal = await createKubernetesData(goal, options, p);
         const goalData = JSON.parse(kubeGoal.data);
 
         if (goalData && goalData.kubernetes) {
@@ -99,9 +101,9 @@ async function kubernetesDataFromGoal(
             }
         }
     }
-    logger.debug(`Kubernetes goal options: ${JSON.stringify(options)}`);
+    logger.debug(`Kubernetes goal: ${JSON.stringify(kubeGoal)}`);
 
-    return;
+    return kubeGoal;
 }
 
 function namespaceFromGoal(goal: SdmGoal): string {
