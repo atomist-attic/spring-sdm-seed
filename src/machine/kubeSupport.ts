@@ -32,7 +32,6 @@ import {
 import { SdmGoal } from "@atomist/sdm/ingesters/sdmGoalIngester";
 
 export function kubernetesDataCallback(
-    kind: "node" | "maven",
     options: SoftwareDeliveryMachineOptions,
     configuration: Configuration,
 ): (goal: SdmGoal, context: RepoContext) => Promise<SdmGoal> {
@@ -41,13 +40,12 @@ export function kubernetesDataCallback(
         return options.projectLoader.doWithProject({
             credentials: ctx.credentials, id: ctx.id, context: ctx.context, readOnly: true,
         }, async p => {
-            return kubernetesDataFromGoal(kind, goal, p, configuration);
+            return kubernetesDataFromGoal(goal, p, configuration);
         });
     };
 }
 
 function kubernetesDataFromGoal(
-    kind: "node" | "maven",
     goal: SdmGoal,
     p: GitProject,
     configuration: Configuration,
@@ -61,12 +59,14 @@ function kubernetesDataFromGoal(
         ns,
         replicas: 1,
     };
-    if (kind === "node") {
+    if (p.fileExistsSync("package.json")) {
         options.port = 2866;
-    } else if (kind === "maven") {
+    } else if (p.fileExistsSync("pom.xml")) {
         options.port = 8080;
         options.path = `/${name}`;
         options.host = `play.atomist.${(ns === "testing") ? "io" : "com"}`;
+        options.protocol = "https";
+        (options as any).tlsSecret = options.host.replace(/\./g, "-").replace("play", "star");
     }
     logger.debug(`Kubernetes goal options: ${JSON.stringify(options)}`);
     return createKubernetesData(goal, options, p);

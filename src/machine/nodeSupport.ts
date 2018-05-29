@@ -57,7 +57,6 @@ import {
     ReleaseVersionGoal,
     StagingDeploymentGoal,
 } from "./goals";
-import { kubernetesDataCallback } from "./kubeSupport";
 import {
     DockerReleasePreparations,
     DocsReleasePreparations,
@@ -128,15 +127,6 @@ export function addNodeSupport(sdm: SoftwareDeliveryMachine, configuration: Conf
             goal: ProductionDeploymentGoal,
             pushTest: IsNode,
             sideEffectName: "@atomist/k8-automation",
-        })
-
-        .addFullfillmentCallback({
-            goal: StagingDeploymentGoal,
-            callback: kubernetesDataCallback("node", sdm.opts, configuration),
-        })
-        .addFullfillmentCallback({
-            goal: ProductionDeploymentGoal,
-            callback: kubernetesDataCallback("node", sdm.opts, configuration),
         });
 
     sdm.addNewRepoWithCodeActions(tagRepo(AutomationClientTagger))

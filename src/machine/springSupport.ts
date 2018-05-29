@@ -60,15 +60,12 @@ import { SuggestAddingDockerfile } from "../commands/addDockerfile";
 import { springBootGenerator } from "../commands/springBootGenerator";
 import { mavenSourceDeployer } from "../support/localSpringBootDeployers";
 import {
-    ProductionDeploymentGoal,
     PublishGoal,
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
     ReleaseTagGoal,
     ReleaseVersionGoal,
-    StagingDeploymentGoal,
 } from "./goals";
-import { kubernetesDataCallback } from "./kubeSupport";
 import {
     DockerReleasePreparations,
     executeReleaseDocker,
@@ -167,26 +164,5 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
         }))
         .addNewRepoWithCodeActions(tagRepo(springBootTagger))
         .addChannelLinkListeners(SuggestAddingDockerfile);
-
-    sdm.goalFulfillmentMapper
-        .addSideEffect({
-            goal: StagingDeploymentGoal,
-            pushTest: IsMaven,
-            sideEffectName: "@atomist/k8-automation",
-        })
-        .addSideEffect({
-            goal: ProductionDeploymentGoal,
-            pushTest: IsMaven,
-            sideEffectName: "@atomist/k8-automation",
-        })
-
-        .addFullfillmentCallback({
-            goal: StagingDeploymentGoal,
-            callback: kubernetesDataCallback("maven", sdm.opts, configuration),
-        })
-        .addFullfillmentCallback({
-            goal: ProductionDeploymentGoal,
-            callback: kubernetesDataCallback("maven", sdm.opts, configuration),
-        });
 
 }

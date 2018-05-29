@@ -16,6 +16,7 @@
 
 import { Configuration } from "@atomist/automation-client";
 import {
+    anySatisfied,
     executeTag,
     FromAtomist,
     IsAtomistAutomationClient,
@@ -52,8 +53,11 @@ import {
     DockerReleaseGoals,
     KubernetesDeployGoals,
     LocalDeploymentGoals,
+    ProductionDeploymentGoal,
     SimplifiedKubernetesDeployGoals,
+    StagingDeploymentGoal,
 } from "./goals";
+import { kubernetesDataCallback } from "./kubeSupport";
 import { addNodeSupport } from "./nodeSupport";
 import { addSpringSupport } from "./springSupport";
 
@@ -115,6 +119,27 @@ export function machine(
 
     addNodeSupport(sdm, configuration);
     addSpringSupport(sdm, configuration);
+
+    sdm.goalFulfillmentMapper
+        .addSideEffect({
+            goal: StagingDeploymentGoal,
+            pushTest: anySatisfied(IsMaven, IsNode),
+            sideEffectName: "@atomist/k8-automation",
+        })
+        .addSideEffect({
+            goal: ProductionDeploymentGoal,
+            pushTest: anySatisfied(IsMaven, IsNode),
+            sideEffectName: "@atomist/k8-automation",
+        })
+
+        .addFullfillmentCallback({
+            goal: StagingDeploymentGoal,
+            callback: kubernetesDataCallback(sdm.opts, configuration),
+        })
+        .addFullfillmentCallback({
+            goal: ProductionDeploymentGoal,
+            callback: kubernetesDataCallback(sdm.opts, configuration),
+        });
 
     return sdm;
 }
