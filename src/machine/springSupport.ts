@@ -140,7 +140,7 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
                     ...configuration.sdm.docker.hub as DockerOptions,
                 }), { pushTest: allSatisfied(IsMaven, hasFile("Dockerfile")) })
         .addGoalImplementation("tagRelease", ReleaseTagGoal,
-            executeReleaseTag(sdm.opts.projectLoader), { pushTest: IsMaven })
+             executeReleaseTag(sdm.opts.projectLoader))
         .addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal,
             noOpImplementation("ReleaseDocs"), { pushTest: IsMaven })
         .addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
