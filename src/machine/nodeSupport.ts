@@ -111,7 +111,8 @@ export function addNodeSupport(sdm: SoftwareDeliveryMachine, configuration: Conf
                 {
                     ...configuration.sdm.docker.hub as DockerOptions,
                 }), { pushTest: allSatisfied(IsNode, hasFile("Dockerfile")) })
-        .addGoalImplementation("tagRelease", ReleaseTagGoal, executeReleaseTag(sdm.opts.projectLoader))
+        .addGoalImplementation("tagRelease", ReleaseTagGoal,
+            executeReleaseTag(sdm.opts.projectLoader), { pushTest: IsNode })
         .addGoalImplementation("nodeDocsRelease", ReleaseDocsGoal,
             executeReleaseDocs(sdm.opts.projectLoader, DocsReleasePreparations), { pushTest: IsNode })
         .addGoalImplementation("nodeVersionRelease", ReleaseVersionGoal,

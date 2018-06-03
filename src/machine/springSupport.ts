@@ -128,8 +128,10 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
                     ...configuration.sdm.docker.hub as DockerOptions,
                     dockerfileFinder: async () => "Dockerfile",
                 }), { pushTest: IsMaven })
-        .addGoalImplementation("mvnPublish", PublishGoal, noOpImplementation("Publish"), { pushTest: IsMaven })
-        .addGoalImplementation("mvnArtifactRelease", ReleaseArtifactGoal, noOpImplementation("ReleaseArtifact"),
+        .addGoalImplementation("mvnPublish", PublishGoal,
+            noOpImplementation("Publish"), { pushTest: IsMaven })
+        .addGoalImplementation("mvnArtifactRelease", ReleaseArtifactGoal,
+            noOpImplementation("ReleaseArtifact"),
             { pushTest: IsMaven })
         .addGoalImplementation("mvnDockerRelease", ReleaseDockerGoal,
             executeReleaseDocker(sdm.opts.projectLoader,
@@ -137,8 +139,10 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
                 {
                     ...configuration.sdm.docker.hub as DockerOptions,
                 }), { pushTest: allSatisfied(IsMaven, hasFile("Dockerfile")) })
-        .addGoalImplementation("tagRelease", ReleaseTagGoal, executeReleaseTag(sdm.opts.projectLoader))
-        .addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal, noOpImplementation("ReleaseDocs"), { pushTest: IsMaven })
+        .addGoalImplementation("tagRelease", ReleaseTagGoal,
+            executeReleaseTag(sdm.opts.projectLoader), { pushTest: IsMaven })
+        .addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal,
+            noOpImplementation("ReleaseDocs"), { pushTest: IsMaven })
         .addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
             executeReleaseVersion(sdm.opts.projectLoader, MavenProjectIdentifier), { pushTest: IsMaven });
 
