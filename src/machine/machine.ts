@@ -74,7 +74,7 @@ export function machine(
             .itMeans("No material change to Java")
             .setGoals(NoGoals),
         whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
-            not(FromAtomist), IsDeployEnabled)
+            not(FromAtomist))
             .itMeans("Spring Boot service to deploy")
             .setGoals(KubernetesDeployGoals),
         whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
