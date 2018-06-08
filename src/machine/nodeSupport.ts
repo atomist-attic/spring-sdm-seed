@@ -53,7 +53,6 @@ import {
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
     ReleaseDocsGoal,
-    ReleaseTagGoal,
     ReleaseVersionGoal,
     StagingDeploymentGoal,
 } from "./goals";
@@ -63,7 +62,6 @@ import {
     executeReleaseDocker,
     executeReleaseDocs,
     executeReleaseNpm,
-    executeReleaseTag,
     executeReleaseVersion,
     NpmReleasePreparations,
 } from "./release";
