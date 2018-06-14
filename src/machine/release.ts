@@ -514,10 +514,9 @@ export function executeReleaseVersion(
 ): ExecuteGoalWithLog {
 
     return async (rwlc: RunWithLogContext): Promise<ExecuteGoalResult> => {
-        const { status, credentials, id, context } = rwlc;
+        const { credentials, id, context } = rwlc;
 
         return projectLoader.doWithProject({ credentials, id, context, readOnly: false }, async p => {
-            const commit = rwlc.status.commit;
             const version = await rwlcVersion(rwlc);
             const versionRelease = releaseVersion(version);
             const gp = p as GitCommandGitProject;
