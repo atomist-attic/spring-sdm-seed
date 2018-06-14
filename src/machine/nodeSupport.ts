@@ -81,7 +81,7 @@ export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
         executeVersioner(sdm.configuration.sdm.projectLoader, NodeProjectVersioner), { pushTest: IsNode })
         .addGoalImplementation("nodeDockerBuild", DockerBuildGoal,
             executeDockerBuild(
-                sdm.configuration.sdms.projectLoader,
+                sdm.configuration.sdm.projectLoader,
                 DefaultDockerImageNameCreator,
                 NpmPreparations,
                 {
