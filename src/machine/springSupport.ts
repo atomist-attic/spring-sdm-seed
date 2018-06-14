@@ -14,45 +14,45 @@
  * limitations under the License.
  */
 
-import {
-    Configuration,
-} from "@atomist/automation-client";
 import { GitHubRepoRef } from "@atomist/automation-client/operations/common/GitHubRepoRef";
 import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
     allSatisfied,
-    branchFromCommit,
-    createEphemeralProgressLog,
-    DelimitedWriteProgressLogDecorator,
     ExecuteGoalResult,
     ExecuteGoalWithLog,
     hasFile,
-    MavenBuilder,
-    ProjectVersioner,
-    readSdmVersion,
     RunWithLogContext,
     SoftwareDeliveryMachine,
-    tagRepo,
 } from "@atomist/sdm";
-import * as build from "@atomist/sdm/blueprint/dsl/buildDsl";
-import { MavenProjectIdentifier } from "@atomist/sdm/common/delivery/build/local/maven/pomParser";
-import { executeVersioner } from "@atomist/sdm/common/delivery/build/local/projectVersioner";
+import { IsMaven,
+    MavenBuilder,
+    MavenProjectIdentifier,
+    springBootGenerator,
+    springBootTagger,
+} from "@atomist/sdm-pack-spring";
+import { CommonJavaGeneratorConfig } from "@atomist/sdm-pack-spring/dist";
+import { createEphemeralProgressLog } from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
+import * as build from "@atomist/sdm/dsl/buildDsl";
+import {
+    DockerBuildGoal,
+    VersionGoal,
+} from "@atomist/sdm/goal/common/commonGoals";
+import { branchFromCommit } from "@atomist/sdm/internal/delivery/build/executeBuild";
+import {
+    executeVersioner,
+    ProjectVersioner,
+    readSdmVersion,
+} from "@atomist/sdm/internal/delivery/build/local/projectVersioner";
+import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/log/DelimitedWriteProgressLogDecorator";
 import {
     DefaultDockerImageNameCreator,
     DockerOptions,
     executeDockerBuild,
-} from "@atomist/sdm/common/delivery/docker/executeDockerBuild";
-import {
-    DockerBuildGoal,
-    VersionGoal,
-} from "@atomist/sdm/common/delivery/goals/common/commonGoals";
-import { IsMaven } from "@atomist/sdm/common/listener/support/pushtest/jvm/jvmPushTests";
-import { listLocalDeploys } from "@atomist/sdm/handlers/commands/listLocalDeploys";
+} from "@atomist/sdm/pack/docker/executeDockerBuild";
+import { tagRepo } from "@atomist/sdm/util/github/tagRepo";
 import { spawnAndWatch } from "@atomist/sdm/util/misc/spawned";
-import { springBootTagger } from "@atomist/spring-automation/commands/tag/springTagger";
 import * as df from "dateformat";
 import { SuggestAddingDockerfile } from "../commands/addDockerfile";
-import { springBootGenerator } from "../commands/springBootGenerator";
 import {
     PublishGoal,
     ReleaseArtifactGoal,
@@ -110,22 +110,22 @@ function noOpImplementation(action: string): ExecuteGoalWithLog {
     };
 }
 
-export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Configuration) {
+export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
 
     sdm.addBuildRules(
         build.when(IsMaven)
             .itMeans("mvn package")
-            .set(new MavenBuilder(sdm.opts.artifactStore, createEphemeralProgressLog, sdm.opts.projectLoader)));
+            .set(new MavenBuilder(sdm.configuration.sdm.artifactStore, createEphemeralProgressLog, sdm.configuration.sdm.projectLoader)));
 
     sdm.addGoalImplementation("mvnVersioner", VersionGoal,
-        executeVersioner(sdm.opts.projectLoader, MavenProjectVersioner), { pushTest: IsMaven })
+        executeVersioner(sdm.configuration.sdm.projectLoader, MavenProjectVersioner), { pushTest: IsMaven })
         .addGoalImplementation("mvnDockerBuild", DockerBuildGoal,
             executeDockerBuild(
-                sdm.opts.projectLoader,
+                sdm.configuration.sdm.projectLoader,
                 DefaultDockerImageNameCreator,
                 MavenPreparations,
                 {
-                    ...configuration.sdm.docker.hub as DockerOptions,
+                    ...sdm.configuration.sdm.docker.hub as DockerOptions,
                     dockerfileFinder: async () => "Dockerfile",
                 }), { pushTest: IsMaven })
         .addGoalImplementation("mvnPublish", PublishGoal,
@@ -134,25 +134,26 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine, configuration: Co
             noOpImplementation("ReleaseArtifact"),
             { pushTest: IsMaven })
         .addGoalImplementation("mvnDockerRelease", ReleaseDockerGoal,
-            executeReleaseDocker(sdm.opts.projectLoader,
+            executeReleaseDocker(
+                sdm.configuration.sdm.projectLoader,
                 DockerReleasePreparations,
                 {
-                    ...configuration.sdm.docker.hub as DockerOptions,
+                    ...sdm.configuration.sdm.docker.hub as DockerOptions,
                 }), { pushTest: allSatisfied(IsMaven, hasFile("Dockerfile")) })
         .addGoalImplementation("tagRelease", ReleaseTagGoal,
-             executeReleaseTag(sdm.opts.projectLoader))
+             executeReleaseTag(sdm.configuration.sdm.projectLoader))
         .addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal,
             noOpImplementation("ReleaseDocs"), { pushTest: IsMaven })
         .addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
-            executeReleaseVersion(sdm.opts.projectLoader, MavenProjectIdentifier), { pushTest: IsMaven });
+            executeReleaseVersion(sdm.configuration.sdm.projectLoader, MavenProjectIdentifier), { pushTest: IsMaven });
 
-    sdm.addSupportingCommands(listLocalDeploys)
-        .addGenerators(() => springBootGenerator({
-            addAtomistWebhook: false,
-            groupId: "atomist",
-            seed: new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
-            intent: "create spring",
-        }))
+    sdm.addGenerators(springBootGenerator({
+                ...CommonJavaGeneratorConfig,
+                seed: new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
+                groupId: "atomist",
+            }, {
+                intent: "create spring kotlin",
+            }))
         .addNewRepoWithCodeActions(tagRepo(springBootTagger))
         .addChannelLinkListeners(SuggestAddingDockerfile);
 

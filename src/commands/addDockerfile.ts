@@ -23,14 +23,17 @@ import { SimpleProjectEditor } from "@atomist/automation-client/operations/edit/
 import { buttonForCommand } from "@atomist/automation-client/spi/message/MessageClient";
 import {
     ChannelLinkListener,
-    editorCommand,
     EmptyParameters,
+    SoftwareDeliveryMachine,
 } from "@atomist/sdm";
+import { editorCommand } from "@atomist/sdm/api-helper/command/editor/editorCommand";
 import * as slack from "@atomist/slack-messages/SlackMessages";
 
 export const AddDockerfileCommandName = "AddDockerfile";
 
-export const addDockerfile: HandleCommand = editorCommand(
+export function addDockerfile(sdm: SoftwareDeliveryMachine): HandleCommand {
+    return editorCommand(
+    sdm,
     () => addDockerfileEditor,
     AddDockerfileCommandName,
     EmptyParameters,
@@ -43,6 +46,7 @@ export const addDockerfile: HandleCommand = editorCommand(
             "Add Dockerfile\n\n[atomist:generated]",
         ),
     });
+}
 
 export const addDockerfileEditor: SimpleProjectEditor = async (p, ctx) => {
     if (p.fileExistsSync("package.json")) {

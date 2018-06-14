@@ -23,8 +23,6 @@ import {
     Goals,
     GoalWithPrecondition,
     IndependentOfEnvironment,
-    LocalDeploymentGoal,
-    LocalEndpointGoal,
     ProductionEnvironment,
     PushReactionGoal,
     ReviewGoal,
@@ -32,9 +30,10 @@ import {
 } from "@atomist/sdm";
 import {
     DockerBuildGoal,
+    LocalEndpointGoal,
     TagGoal,
     VersionGoal,
-} from "@atomist/sdm/common/delivery/goals/common/commonGoals";
+} from "@atomist/sdm/goal/common/commonGoals";
 
 export const PublishGoal = new GoalWithPrecondition({
     uniqueName: "Publish",
@@ -233,9 +232,3 @@ export const LeinDockerGoals = new Goals(
     new GoalWithPrecondition(LibraryPublished.definition, TagGoal),
 );
 
-export const LocalDeploymentGoals = new Goals(
-    "Local Deployment",
-    PushReactionGoal,
-    LocalDeploymentGoal,
-    LocalEndpointGoal,
-);
