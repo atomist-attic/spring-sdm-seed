@@ -152,7 +152,7 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
                 seed: new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
                 groupId: "atomist",
             }, {
-                intent: "create spring kotlin",
+                intent: "create spring",
             }))
         .addNewRepoWithCodeActions(tagRepo(springBootTagger))
         .addChannelLinkListeners(SuggestAddingDockerfile);
