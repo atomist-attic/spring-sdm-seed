@@ -121,7 +121,7 @@ export function machine(
     sdm.addGoalImplementation("tag", TagGoal,
         executeTag(sdm.configuration.sdm.projectLoader));
 
-    addNodeSupport(sdm,);
+    addNodeSupport(sdm);
     addSpringSupport(sdm);
 
     sdm.addExtensionPacks(kubernetesSupport({
@@ -133,7 +133,7 @@ export function machine(
             goal: ProductionDeploymentGoal,
             pushTest: anySatisfied(IsMaven, IsNode),
             callback: kubernetesDataCallback(sdm.configuration),
-        }]
+        }],
     }));
 
     return sdm;

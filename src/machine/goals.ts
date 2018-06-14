@@ -24,13 +24,11 @@ import {
     GoalWithPrecondition,
     IndependentOfEnvironment,
     ProductionEnvironment,
-    PushReactionGoal,
     ReviewGoal,
     StagingEnvironment,
 } from "@atomist/sdm";
 import {
     DockerBuildGoal,
-    LocalEndpointGoal,
     TagGoal,
     VersionGoal,
 } from "@atomist/sdm/goal/common/commonGoals";
@@ -231,4 +229,3 @@ export const LeinDockerGoals = new Goals(
     TagGoal,
     new GoalWithPrecondition(LibraryPublished.definition, TagGoal),
 );
-
