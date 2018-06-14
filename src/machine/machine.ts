@@ -38,6 +38,7 @@ import {
     enableDeploy,
 } from "@atomist/sdm/handlers/commands/SetDeployEnablement";
 import { executeTag } from "@atomist/sdm/internal/delivery/build/executeTag";
+import { summarizeGoalsInGitHubStatus } from "@atomist/sdm/internal/delivery/goals/support/githubStatusSummarySupport";
 import { createSoftwareDeliveryMachine } from "@atomist/sdm/machine/machineFactory";
 import { HasDockerfile } from "@atomist/sdm/mapping/pushtest/docker/dockerPushTests";
 import {
@@ -135,6 +136,8 @@ export function machine(
             callback: kubernetesDataCallback(sdm.configuration),
         }],
     }));
+
+    summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
 }
