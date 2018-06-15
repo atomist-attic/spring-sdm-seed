@@ -21,23 +21,22 @@ import {
 import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
     ProductionEnvironment,
-    SoftwareDeliveryMachineOptions,
+    RepoContext,
+    SoftwareDeliveryMachineConfiguration,
     StagingEnvironment,
 } from "@atomist/sdm";
-import { RepoContext } from "@atomist/sdm/common/context/SdmContext";
 import {
     createKubernetesData,
     KubernetesOptions,
-} from "@atomist/sdm/handlers/events/delivery/goals/k8s/launchGoalK8";
+} from "@atomist/sdm-pack-k8";
 import { SdmGoal } from "@atomist/sdm/ingesters/sdmGoalIngester";
 
 export function kubernetesDataCallback(
-    options: SoftwareDeliveryMachineOptions,
-    configuration: Configuration,
+    configuration: SoftwareDeliveryMachineConfiguration,
 ): (goal: SdmGoal, context: RepoContext) => Promise<SdmGoal> {
 
     return async (goal, ctx) => {
-        return options.projectLoader.doWithProject({
+        return configuration.sdm.projectLoader.doWithProject({
             credentials: ctx.credentials, id: ctx.id, context: ctx.context, readOnly: true,
         }, async p => {
             return kubernetesDataFromGoal(goal, p, configuration);

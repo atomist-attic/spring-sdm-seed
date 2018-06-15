@@ -29,20 +29,20 @@ import { GitCommandGitProject } from "@atomist/automation-client/project/git/Git
 import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import { NodeFsLocalProject } from "@atomist/automation-client/project/local/NodeFsLocalProject";
 import {
-    branchFromCommit,
-    createTagForStatus,
-    DelimitedWriteProgressLogDecorator,
-    DockerOptions,
     ExecuteGoalResult,
     ExecuteGoalWithLog,
-    NpmOptions,
     PrepareForGoalExecution,
     ProgressLog,
-    ProjectIdentifier,
     ProjectLoader,
-    readSdmVersion,
     RunWithLogContext,
 } from "@atomist/sdm";
+import { branchFromCommit } from "@atomist/sdm/internal/delivery/build/executeBuild";
+import { createTagForStatus } from "@atomist/sdm/internal/delivery/build/executeTag";
+import { NpmOptions } from "@atomist/sdm/internal/delivery/build/local/npm/executePublish";
+import { ProjectIdentifier } from "@atomist/sdm/internal/delivery/build/local/projectIdentifier";
+import { readSdmVersion } from "@atomist/sdm/internal/delivery/build/local/projectVersioner";
+import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/log/DelimitedWriteProgressLogDecorator";
+import { DockerOptions } from "@atomist/sdm/pack/docker/executeDockerBuild";
 import {
     createRelease,
     createStatus,

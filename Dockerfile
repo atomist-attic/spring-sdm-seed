@@ -40,9 +40,10 @@ RUN curl -sL -o /usr/local/bin/lein https://raw.githubusercontent.com/technomanc
 RUN mkdir -p /opt/app
 WORKDIR /opt/app
 
+ENV BLUEBIRD_WARNINGS 0
+ENV NODE_ENV production
 ENV NPM_CONFIG_LOGLEVEL warn
 ENV SUPPRESS_NO_CONFIG_WARNING true
-ENV NODE_ENV production
 
 EXPOSE 2866
 

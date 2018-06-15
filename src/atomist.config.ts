@@ -18,7 +18,7 @@ import { Configuration } from "@atomist/automation-client";
 import {
     ConfigureOptions,
     configureSdm,
-} from "@atomist/sdm";
+} from "@atomist/sdm/internal/machine/configureSdm";
 import { machine } from "./machine/machine";
 
 const machineOptions: ConfigureOptions = {

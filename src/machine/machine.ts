@@ -14,38 +14,44 @@
  * limitations under the License.
  */
 
-import { Configuration } from "@atomist/automation-client";
 import {
     anySatisfied,
-    executeTag,
     FromAtomist,
-    IsAtomistAutomationClient,
+    IsDeployEnabled,
     not,
     SoftwareDeliveryMachine,
-    SoftwareDeliveryMachineOptions,
-    TagGoal,
+    SoftwareDeliveryMachineConfiguration,
     ToDefaultBranch,
-    ToPublicRepo,
     whenPushSatisfies,
 } from "@atomist/sdm";
-import { NoGoals } from "@atomist/sdm/common/delivery/goals/common/commonGoals";
-import { IsDeployEnabled } from "@atomist/sdm/common/listener/support/pushtest/deployPushTests";
-import { HasDockerfile } from "@atomist/sdm/common/listener/support/pushtest/docker/dockerPushTests";
-import { IsMaven } from "@atomist/sdm/common/listener/support/pushtest/jvm/jvmPushTests";
-import { IsNode } from "@atomist/sdm/common/listener/support/pushtest/node/nodePushTests";
+import { kubernetesSupport } from "@atomist/sdm-pack-k8/dist";
+import {
+    HasSpringBootApplicationClass,
+    IsMaven,
+} from "@atomist/sdm-pack-spring";
+import {
+    NoGoals,
+    TagGoal,
+} from "@atomist/sdm/goal/common/commonGoals";
 import {
     disableDeploy,
     enableDeploy,
 } from "@atomist/sdm/handlers/commands/SetDeployEnablement";
-import { addDockerfile } from "../commands/addDockerfile";
+import { executeTag } from "@atomist/sdm/internal/delivery/build/executeTag";
+import { summarizeGoalsInGitHubStatus } from "@atomist/sdm/internal/delivery/goals/support/githubStatusSummarySupport";
+import { createSoftwareDeliveryMachine } from "@atomist/sdm/machine/machineFactory";
+import { HasDockerfile } from "@atomist/sdm/mapping/pushtest/docker/dockerPushTests";
 import {
-    IsSimplifiedDeployment,
-} from "../support/isSimplifiedDeployment";
+    IsAtomistAutomationClient,
+    IsNode,
+} from "@atomist/sdm/mapping/pushtest/node/nodePushTests";
+import { ToPublicRepo } from "@atomist/sdm/mapping/pushtest/toPublicRepo";
+import { addDockerfile } from "../commands/addDockerfile";
+import { IsSimplifiedDeployment } from "../support/isSimplifiedDeployment";
 import {
     MaterialChangeToJvmRepo,
     MaterialChangeToNodeRepo,
 } from "../support/materialChangeToRepo";
-import { HasSpringBootApplicationClass } from "../support/springPushTests";
 import {
     BuildGoals,
     BuildReleaseGoals,
@@ -61,13 +67,13 @@ import { addNodeSupport } from "./nodeSupport";
 import { addSpringSupport } from "./springSupport";
 
 export function machine(
-    options: SoftwareDeliveryMachineOptions,
-    configuration: Configuration,
+    configuration: SoftwareDeliveryMachineConfiguration,
 ): SoftwareDeliveryMachine {
 
-    const sdm = new SoftwareDeliveryMachine(
-        "Kubernetes Demo Software Delivery Machine",
-        options,
+    const sdm = createSoftwareDeliveryMachine({
+            name: "Kubernetes Demo Software Delivery Machine",
+            configuration,
+        },
 
         // Spring
         whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
@@ -111,34 +117,27 @@ export function machine(
 
     );
 
-    sdm.addSupportingCommands(enableDeploy, disableDeploy, () => addDockerfile);
+    sdm.addSupportingCommands(enableDeploy, disableDeploy, () => addDockerfile(sdm));
 
     sdm.addGoalImplementation("tag", TagGoal,
-        executeTag(sdm.opts.projectLoader));
+        executeTag(sdm.configuration.sdm.projectLoader));
 
-    addNodeSupport(sdm, configuration);
-    addSpringSupport(sdm, configuration);
+    addNodeSupport(sdm);
+    addSpringSupport(sdm);
 
-    sdm.goalFulfillmentMapper
-        .addSideEffect({
+    sdm.addExtensionPacks(kubernetesSupport({
+        deployments: [{
             goal: StagingDeploymentGoal,
             pushTest: anySatisfied(IsMaven, IsNode),
-            sideEffectName: "@atomist/k8-automation",
-        })
-        .addSideEffect({
+            callback: kubernetesDataCallback(sdm.configuration),
+        }, {
             goal: ProductionDeploymentGoal,
             pushTest: anySatisfied(IsMaven, IsNode),
-            sideEffectName: "@atomist/k8-automation",
-        })
+            callback: kubernetesDataCallback(sdm.configuration),
+        }],
+    }));
 
-        .addFullfillmentCallback({
-            goal: StagingDeploymentGoal,
-            callback: kubernetesDataCallback(sdm.opts, configuration),
-        })
-        .addFullfillmentCallback({
-            goal: ProductionDeploymentGoal,
-            callback: kubernetesDataCallback(sdm.opts, configuration),
-        });
+    summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
 }
