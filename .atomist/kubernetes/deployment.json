@@ -87,6 +87,10 @@
                 "name": "automation",
                 "mountPath": "/opt/atm",
                 "readOnly": true
+              },
+              {
+                "name": "cache",
+                "mountPath": "/opt/data"
               }
             ]
           }
@@ -103,6 +107,11 @@
             "secret": {
               "secretName": "automation"
             }
+          },
+          {
+            "name": "cache",
+            "hostPath": "/opt/data/demo-sdm",
+            "type": "Directory"
           }
         ],
         "terminationGracePeriodSeconds": 180
