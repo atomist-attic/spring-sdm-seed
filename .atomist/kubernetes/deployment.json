@@ -89,7 +89,7 @@
                 "readOnly": true
               },
               {
-                "name": "cache",
+                "name": "data",
                 "mountPath": "/opt/data"
               }
             ]
@@ -109,9 +109,9 @@
             }
           },
           {
-            "name": "cache",
+            "name": "data",
             "hostPath": {
-              "path": "/opt/data/demo-sdm",
+              "path": "/mnt/disks/ssd0/data/demo-sdm",
               "type": "DirectoryOrCreate"
             }
           }
