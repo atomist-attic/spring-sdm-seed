@@ -149,7 +149,7 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
 
     sdm.addGenerators(springBootGenerator({
                 ...CommonJavaGeneratorConfig,
-                seed: new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
+                seed: () => new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
                 groupId: "atomist",
             }, {
                 intent: "create spring",
