@@ -110,8 +110,10 @@
           },
           {
             "name": "cache",
-            "hostPath": "/opt/data/demo-sdm",
-            "type": "Directory"
+            "hostPath": {
+              "path": "/opt/data/demo-sdm",
+              "type": "Directory"
+            }
           }
         ],
         "terminationGracePeriodSeconds": 180
