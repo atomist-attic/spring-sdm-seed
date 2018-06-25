@@ -24,33 +24,32 @@ import {
     RunWithLogContext,
     SoftwareDeliveryMachine,
 } from "@atomist/sdm";
-import { IsMaven,
+import {
+    DefaultDockerImageNameCreator,
+    DockerBuildGoal,
+    DockerOptions,
+    executeDockerBuild,
+    executeVersioner,
+    tagRepo,
+    VersionGoal,
+} from "@atomist/sdm-core";
+import {
+    ProjectVersioner,
+    readSdmVersion,
+} from "@atomist/sdm-core/internal/delivery/build/local/projectVersioner";
+import {
+    IsMaven,
     MavenBuilder,
     MavenProjectIdentifier,
     springBootGenerator,
     springBootTagger,
 } from "@atomist/sdm-pack-spring";
 import { CommonJavaGeneratorConfig } from "@atomist/sdm-pack-spring/dist";
+import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
+import { branchFromCommit } from "@atomist/sdm/api-helper/goal/executeBuild";
+import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/api-helper/log/DelimitedWriteProgressLogDecorator";
 import { createEphemeralProgressLog } from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
-import * as build from "@atomist/sdm/dsl/buildDsl";
-import {
-    DockerBuildGoal,
-    VersionGoal,
-} from "@atomist/sdm/goal/common/commonGoals";
-import { branchFromCommit } from "@atomist/sdm/internal/delivery/build/executeBuild";
-import {
-    executeVersioner,
-    ProjectVersioner,
-    readSdmVersion,
-} from "@atomist/sdm/internal/delivery/build/local/projectVersioner";
-import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/log/DelimitedWriteProgressLogDecorator";
-import {
-    DefaultDockerImageNameCreator,
-    DockerOptions,
-    executeDockerBuild,
-} from "@atomist/sdm/pack/docker/executeDockerBuild";
-import { tagRepo } from "@atomist/sdm/util/github/tagRepo";
-import { spawnAndWatch } from "@atomist/sdm/util/misc/spawned";
+import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
 import * as df from "dateformat";
 import { SuggestAddingDockerfile } from "../commands/addDockerfile";
 import {

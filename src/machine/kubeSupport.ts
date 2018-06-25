@@ -22,6 +22,7 @@ import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
     ProductionEnvironment,
     RepoContext,
+    SdmGoal,
     SoftwareDeliveryMachineConfiguration,
     StagingEnvironment,
 } from "@atomist/sdm";
@@ -29,7 +30,6 @@ import {
     createKubernetesData,
     KubernetesOptions,
 } from "@atomist/sdm-pack-k8";
-import { SdmGoal } from "@atomist/sdm/ingesters/sdmGoalIngester";
 
 export function kubernetesDataCallback(
     configuration: SoftwareDeliveryMachineConfiguration,

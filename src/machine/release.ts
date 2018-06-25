@@ -36,22 +36,22 @@ import {
     ProjectLoader,
     RunWithLogContext,
 } from "@atomist/sdm";
-import { branchFromCommit } from "@atomist/sdm/internal/delivery/build/executeBuild";
-import { createTagForStatus } from "@atomist/sdm/internal/delivery/build/executeTag";
-import { NpmOptions } from "@atomist/sdm/internal/delivery/build/local/npm/executePublish";
-import { ProjectIdentifier } from "@atomist/sdm/internal/delivery/build/local/projectIdentifier";
-import { readSdmVersion } from "@atomist/sdm/internal/delivery/build/local/projectVersioner";
-import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/log/DelimitedWriteProgressLogDecorator";
-import { DockerOptions } from "@atomist/sdm/pack/docker/executeDockerBuild";
 import {
     createRelease,
     createStatus,
-} from "@atomist/sdm/util/github/ghub";
+    createTagForStatus,
+    DockerOptions,
+    NpmOptions,
+    ProjectIdentifier,
+    readSdmVersion,
+} from "@atomist/sdm-core";
+import { branchFromCommit } from "@atomist/sdm/api-helper/goal/executeBuild";
+import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/api-helper/log/DelimitedWriteProgressLogDecorator";
 import {
     ChildProcessResult,
     spawnAndWatch,
     SpawnCommand,
-} from "@atomist/sdm/util/misc/spawned";
+} from "@atomist/sdm/api-helper/misc/spawned";
 import { SpawnOptions } from "child_process";
 import * as fs from "fs-extra";
 import * as path from "path";

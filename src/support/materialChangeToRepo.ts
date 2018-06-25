@@ -23,7 +23,7 @@ import {
     anyFileChangedSuchThat,
     anyFileChangedWithExtension,
     filesChangedSince,
-} from "@atomist/sdm/util/git/filesChangedSince";
+} from "@atomist/sdm/api-helper/misc/git/filesChangedSince";
 import * as _ from "lodash";
 
 /**

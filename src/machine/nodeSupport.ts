@@ -20,31 +20,25 @@ import {
     not,
     SoftwareDeliveryMachine,
 } from "@atomist/sdm";
-import * as build from "@atomist/sdm/dsl/buildDsl";
-import {
-    DockerBuildGoal,
-    VersionGoal,
-} from "@atomist/sdm/goal/common/commonGoals";
-import {
-    executePublish,
-    NpmOptions,
-} from "@atomist/sdm/internal/delivery/build/local/npm/executePublish";
-import { NodeProjectIdentifier } from "@atomist/sdm/internal/delivery/build/local/npm/nodeProjectIdentifier";
-import { NodeProjectVersioner } from "@atomist/sdm/internal/delivery/build/local/npm/nodeProjectVersioner";
-import {
-    nodeBuilder,
-    NpmPreparations,
-} from "@atomist/sdm/internal/delivery/build/local/npm/npmBuilder";
-import { executeVersioner } from "@atomist/sdm/internal/delivery/build/local/projectVersioner";
-import { IsNode } from "@atomist/sdm/mapping/pushtest/node/nodePushTests";
 import {
     DefaultDockerImageNameCreator,
+    DockerBuildGoal,
     DockerOptions,
     executeDockerBuild,
-} from "@atomist/sdm/pack/docker/executeDockerBuild";
-import { PackageLockFingerprinter } from "@atomist/sdm/pack/node/PackageLockFingerprinter";
-import { tslintFix } from "@atomist/sdm/pack/node/tslint";
-import { tagRepo } from "@atomist/sdm/util/github/tagRepo";
+    executePublish,
+    executeVersioner,
+    IsNode,
+    nodeBuilder,
+    NodeProjectIdentifier,
+    NodeProjectVersioner,
+    NpmOptions,
+    NpmPreparations,
+    PackageLockFingerprinter,
+    tagRepo,
+    tslintFix,
+    VersionGoal,
+} from "@atomist/sdm-core";
+import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
 import { AutomationClientTagger } from "../support/tagger";
 import {
     ProductionDeploymentGoal,

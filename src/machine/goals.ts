@@ -19,6 +19,7 @@
 import {
     AutofixGoal,
     BuildGoal,
+    FingerprintGoal,
     Goal,
     Goals,
     GoalWithPrecondition,
@@ -31,7 +32,7 @@ import {
     DockerBuildGoal,
     TagGoal,
     VersionGoal,
-} from "@atomist/sdm/goal/common/commonGoals";
+} from "@atomist/sdm-core";
 
 export const PublishGoal = new GoalWithPrecondition({
     uniqueName: "Publish",
@@ -123,6 +124,7 @@ export const CheckGoals = new Goals(
     VersionGoal,
     ReviewGoal,
     AutofixGoal,
+    FingerprintGoal,
 );
 
 // Just running the build and publish

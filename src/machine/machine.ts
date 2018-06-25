@@ -24,28 +24,24 @@ import {
     ToDefaultBranch,
     whenPushSatisfies,
 } from "@atomist/sdm";
+import {
+    createSoftwareDeliveryMachine,
+    disableDeploy,
+    enableDeploy,
+    executeTag,
+    HasDockerfile,
+    IsAtomistAutomationClient,
+    IsNode,
+    NoGoals,
+    summarizeGoalsInGitHubStatus,
+    TagGoal,
+    ToPublicRepo,
+} from "@atomist/sdm-core";
 import { kubernetesSupport } from "@atomist/sdm-pack-k8/dist";
 import {
     HasSpringBootApplicationClass,
     IsMaven,
 } from "@atomist/sdm-pack-spring";
-import {
-    NoGoals,
-    TagGoal,
-} from "@atomist/sdm/goal/common/commonGoals";
-import {
-    disableDeploy,
-    enableDeploy,
-} from "@atomist/sdm/handlers/commands/SetDeployEnablement";
-import { executeTag } from "@atomist/sdm/internal/delivery/build/executeTag";
-import { summarizeGoalsInGitHubStatus } from "@atomist/sdm/internal/delivery/goals/support/githubStatusSummarySupport";
-import { createSoftwareDeliveryMachine } from "@atomist/sdm/machine/machineFactory";
-import { HasDockerfile } from "@atomist/sdm/mapping/pushtest/docker/dockerPushTests";
-import {
-    IsAtomistAutomationClient,
-    IsNode,
-} from "@atomist/sdm/mapping/pushtest/node/nodePushTests";
-import { ToPublicRepo } from "@atomist/sdm/mapping/pushtest/toPublicRepo";
 import { addDockerfile } from "../commands/addDockerfile";
 import { IsSimplifiedDeployment } from "../support/isSimplifiedDeployment";
 import {
