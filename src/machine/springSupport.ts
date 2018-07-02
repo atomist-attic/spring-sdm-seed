@@ -19,18 +19,18 @@ import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
     allSatisfied,
     ExecuteGoalResult,
-    ExecuteGoalWithLog,
-    hasFile,
+    ExecuteGoalWithLog, FromAtomist, goalContributors,
+    hasFile, not,
     RunWithLogContext,
-    SoftwareDeliveryMachine,
+    SoftwareDeliveryMachine, ToDefaultBranch, whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     DefaultDockerImageNameCreator,
     DockerBuildGoal,
     DockerOptions,
     executeDockerBuild,
-    executeVersioner,
-    tagRepo,
+    executeVersioner, HasDockerfile, NoGoals,
+    tagRepo, ToPublicRepo,
     VersionGoal,
 } from "@atomist/sdm-core";
 import {
@@ -44,7 +44,7 @@ import {
     springBootGenerator,
     springBootTagger,
 } from "@atomist/sdm-pack-spring";
-import { CommonJavaGeneratorConfig } from "@atomist/sdm-pack-spring/dist";
+import {CommonJavaGeneratorConfig, HasSpringBootApplicationClass} from "@atomist/sdm-pack-spring/dist";
 import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
 import { branchFromCommit } from "@atomist/sdm/api-helper/goal/executeBuild";
 import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/api-helper/log/DelimitedWriteProgressLogDecorator";
@@ -53,6 +53,8 @@ import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
 import * as df from "dateformat";
 import { SuggestAddingDockerfile } from "../commands/addDockerfile";
 import {
+    BuildGoals, DockerGoals,
+    KubernetesDeployGoals,
     PublishGoal,
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
@@ -66,6 +68,7 @@ import {
     executeReleaseTag,
     executeReleaseVersion,
 } from "./release";
+import {MaterialChangeToJvmRepo} from "../support/materialChangeToRepo";
 
 const MavenProjectVersioner: ProjectVersioner = async (status, p, log) => {
     const projectId = await MavenProjectIdentifier(p);
@@ -110,12 +113,20 @@ function noOpImplementation(action: string): ExecuteGoalWithLog {
 }
 
 export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
-
-    sdm.addBuildRules(
-        build.when(IsMaven)
-            .itMeans("mvn package")
-            .set(new MavenBuilder(sdm.configuration.sdm.artifactStore, createEphemeralProgressLog, sdm.configuration.sdm.projectLoader)));
-
+    sdm.addGoalContributions(goalContributors(
+        whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
+            .itMeans("No material change to Java")
+            .setGoals(NoGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
+            not(FromAtomist))
+            .itMeans("Spring Boot service to deploy")
+            .setGoals(KubernetesDeployGoals),
+        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
+            .itMeans("Spring Boot service to Dockerize")
+            .setGoals(DockerGoals),
+        whenPushSatisfies(IsMaven, not(HasDockerfile))
+            .itMeans("Build")
+            .setGoals(BuildGoals)));
     sdm.addGoalImplementation("mvnVersioner", VersionGoal,
         executeVersioner(sdm.configuration.sdm.projectLoader, MavenProjectVersioner), { pushTest: IsMaven })
         .addGoalImplementation("mvnDockerBuild", DockerBuildGoal,

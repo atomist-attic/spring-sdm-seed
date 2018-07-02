@@ -1,12 +1,12 @@
 {
-  "name": "@atomistplay/demo-sdm",
+  "name": "@atomist/seed-sdm",
   "version": "0.1.0",
-  "description": "an Atomist SDM to deliver automation client projects",
+  "description": "A seed SDM to deliver automation client projects",
   "author": "Atomist, Inc.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/atomist/demo-sdm.git"
+    "url": "https://github.com/atomist/seed-sdm.git"
   },
   "keywords": [
     "atomist",
@@ -15,9 +15,9 @@
     "kubernetes",
     "sdm"
   ],
-  "homepage": "https://github.com/atomist/demo-sdm#readme",
+  "homepage": "https://github.com/atomist/seed-sdm#readme",
   "bugs": {
-    "url": "https://github.com/atomist/demo-sdm/issues"
+    "url": "https://github.com/atomist/seed-sdm/issues"
   },
   "dependencies": {
     "@atomist/automation-client": "^0.17.4-20180621144910",

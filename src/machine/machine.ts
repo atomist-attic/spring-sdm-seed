@@ -16,26 +16,17 @@
 
 import {
     anySatisfied,
-    FromAtomist,
-    IsDeployEnabled,
-    not,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
-    ToDefaultBranch,
-    whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
     disableDeploy,
     enableDeploy,
     executeTag,
-    HasDockerfile,
-    IsAtomistAutomationClient,
     IsNode,
-    NoGoals,
     summarizeGoalsInGitHubStatus,
     TagGoal,
-    ToPublicRepo,
 } from "@atomist/sdm-core";
 import { kubernetesSupport } from "@atomist/sdm-pack-k8/dist";
 import {
@@ -43,22 +34,11 @@ import {
     IsMaven,
 } from "@atomist/sdm-pack-spring";
 import { addDockerfile } from "../commands/addDockerfile";
-import { IsSimplifiedDeployment } from "../support/isSimplifiedDeployment";
 import {
-    MaterialChangeToJvmRepo,
-    MaterialChangeToNodeRepo,
-} from "../support/materialChangeToRepo";
-import {
-    BuildGoals,
-    BuildReleaseGoals,
-    DockerGoals,
-    DockerReleaseGoals,
-    KubernetesDeployGoals,
     ProductionDeploymentGoal,
-    SimplifiedKubernetesDeployGoals,
     StagingDeploymentGoal,
 } from "./goals";
-import { kubernetesDataCallback } from "./kubeSupport";
+import {addK8sSupport, kubernetesDataCallback} from "./kubeSupport";
 import { addNodeSupport } from "./nodeSupport";
 import { addSpringSupport } from "./springSupport";
 
@@ -69,69 +49,13 @@ export function machine(
     const sdm = createSoftwareDeliveryMachine({
             name: "Kubernetes Demo Software Delivery Machine",
             configuration,
-        },
-
-        // Spring
-        whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
-            .itMeans("No material change to Java")
-            .setGoals(NoGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
-            not(FromAtomist))
-            .itMeans("Spring Boot service to deploy")
-            .setGoals(KubernetesDeployGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
-            .itMeans("Spring Boot service to Dockerize")
-            .setGoals(DockerGoals),
-        whenPushSatisfies(IsMaven, not(HasDockerfile))
-            .itMeans("Build")
-            .setGoals(BuildGoals),
-
-        // Node
-        whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
-            .itMeans("No Material Change")
-            .setGoals(NoGoals),
-        // Simplified deployment for SDMs and automation clients
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
-            IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
-            .itMeans("Simplified Deploy")
-            .setGoals(SimplifiedKubernetesDeployGoals),
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
-            .itMeans("Deploy")
-            .setGoals(KubernetesDeployGoals),
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsAtomistAutomationClient)
-            .itMeans("Docker Release Build")
-            .setGoals(DockerReleaseGoals),
-        whenPushSatisfies(IsNode, HasDockerfile, IsAtomistAutomationClient)
-            .itMeans("Docker Build")
-            .setGoals(DockerGoals),
-        whenPushSatisfies(IsNode, not(HasDockerfile), ToDefaultBranch)
-            .itMeans("Release Build")
-            .setGoals(BuildReleaseGoals),
-        whenPushSatisfies(IsNode, not(HasDockerfile))
-            .itMeans("Build")
-            .setGoals(BuildGoals),
-
-    );
-
-    sdm.addSupportingCommands(enableDeploy, disableDeploy, () => addDockerfile(sdm));
-
-    sdm.addGoalImplementation("tag", TagGoal,
-        executeTag(sdm.configuration.sdm.projectLoader));
-
+        });
     addNodeSupport(sdm);
     addSpringSupport(sdm);
-
-    sdm.addExtensionPacks(kubernetesSupport({
-        deployments: [{
-            goal: StagingDeploymentGoal,
-            pushTest: anySatisfied(IsMaven, IsNode),
-            callback: kubernetesDataCallback(sdm.configuration),
-        }, {
-            goal: ProductionDeploymentGoal,
-            pushTest: anySatisfied(IsMaven, IsNode),
-            callback: kubernetesDataCallback(sdm.configuration),
-        }],
-    }));
+    addK8sSupport(sdm);
+    sdm.addSupportingCommands(enableDeploy, disableDeploy, () => addDockerfile(sdm));
+    sdm.addGoalImplementation("tag", TagGoal,
+        executeTag(sdm.configuration.sdm.projectLoader));
 
     summarizeGoalsInGitHubStatus(sdm);
 

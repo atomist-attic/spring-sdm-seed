@@ -15,10 +15,10 @@
  */
 
 import {
-    allSatisfied,
-    hasFile,
+    allSatisfied, goalContributors,
+    hasFile, IsDeployEnabled,
     not,
-    SoftwareDeliveryMachine,
+    SoftwareDeliveryMachine, ToDefaultBranch, whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     DefaultDockerImageNameCreator,
@@ -26,11 +26,11 @@ import {
     DockerOptions,
     executeDockerBuild,
     executePublish,
-    executeVersioner,
+    executeVersioner, HasDockerfile, IsAtomistAutomationClient,
     IsNode,
     nodeBuilder,
     NodeProjectIdentifier,
-    NodeProjectVersioner,
+    NodeProjectVersioner, NoGoals,
     NpmOptions,
     NpmPreparations,
     PackageLockFingerprinter,
@@ -41,12 +41,15 @@ import {
 import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
 import { AutomationClientTagger } from "../support/tagger";
 import {
+    BuildGoals,
+    BuildReleaseGoals, DockerGoals, DockerReleaseGoals,
+    KubernetesDeployGoals,
     ProductionDeploymentGoal,
     PublishGoal,
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
     ReleaseDocsGoal,
-    ReleaseVersionGoal,
+    ReleaseVersionGoal, SimplifiedKubernetesDeployGoals,
     StagingDeploymentGoal,
 } from "./goals";
 import {
@@ -58,11 +61,39 @@ import {
     executeReleaseVersion,
     NpmReleasePreparations,
 } from "./release";
+import {IsSimplifiedDeployment} from "../support/isSimplifiedDeployment";
+import {MaterialChangeToNodeRepo} from "../support/materialChangeToRepo";
 
 export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
 
     const hasPackageLock = hasFile("package-lock.json");
 
+    sdm.addGoalContributions(goalContributors(
+        // Node
+        whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
+            .itMeans("No Material Change")
+            .setGoals(NoGoals),
+        // Simplified deployment for SDMs and automation clients
+        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
+            IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
+            .itMeans("Simplified Deploy")
+            .setGoals(SimplifiedKubernetesDeployGoals),
+        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
+            .itMeans("Deploy")
+            .setGoals(KubernetesDeployGoals),
+        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsAtomistAutomationClient)
+            .itMeans("Docker Release Build")
+            .setGoals(DockerReleaseGoals),
+        whenPushSatisfies(IsNode, HasDockerfile, IsAtomistAutomationClient)
+            .itMeans("Docker Build")
+            .setGoals(DockerGoals),
+        whenPushSatisfies(IsNode, not(HasDockerfile), ToDefaultBranch)
+            .itMeans("Release Build")
+            .setGoals(BuildReleaseGoals),
+        whenPushSatisfies(IsNode, not(HasDockerfile))
+            .itMeans("Build")
+            .setGoals(BuildGoals),
+    ));
     sdm.addBuildRules(
         build.when(IsNode, hasPackageLock)
             .itMeans("npm run build")

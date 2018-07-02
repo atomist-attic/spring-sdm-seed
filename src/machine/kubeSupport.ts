@@ -20,9 +20,10 @@ import {
 } from "@atomist/automation-client";
 import { GitProject } from "@atomist/automation-client/project/git/GitProject";
 import {
+    anySatisfied,
     ProductionEnvironment,
     RepoContext,
-    SdmGoal,
+    SdmGoal, SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
     StagingEnvironment,
 } from "@atomist/sdm";
@@ -30,6 +31,24 @@ import {
     createKubernetesData,
     KubernetesOptions,
 } from "@atomist/sdm-pack-k8";
+import {ProductionDeploymentGoal, StagingDeploymentGoal} from "./goals";
+import {kubernetesSupport} from "@atomist/sdm-pack-k8/dist";
+import {IsNode} from "@atomist/sdm-core";
+import {IsMaven} from "@atomist/sdm-pack-spring/dist";
+
+export function addK8sSupport(sdm: SoftwareDeliveryMachine) {
+    sdm.addExtensionPacks(kubernetesSupport({
+        deployments: [{
+            goal: StagingDeploymentGoal,
+            pushTest: anySatisfied(IsMaven, IsNode),
+            callback: kubernetesDataCallback(sdm.configuration),
+        }, {
+            goal: ProductionDeploymentGoal,
+            pushTest: anySatisfied(IsMaven, IsNode),
+            callback: kubernetesDataCallback(sdm.configuration),
+        }],
+    }));
+}
 
 export function kubernetesDataCallback(
     configuration: SoftwareDeliveryMachineConfiguration,
