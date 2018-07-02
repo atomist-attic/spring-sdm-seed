@@ -2,22 +2,22 @@
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
-  name: demo-sdm
+  name: seed-sdm
   namespace: sdm
   labels:
-    app: demo-sdm
+    app: seed-sdm
     owner: atomist
 spec:
   replicas: 1
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: demo-sdm
+      app: seed-sdm
       owner: atomist
   template:
     metadata:
       labels:
-        app: demo-sdm
+        app: seed-sdm
         owner: atomist
         version: "0"
       annotations:
@@ -25,12 +25,12 @@ spec:
     spec:
       serviceAccountName: sdm-serviceaccount
       containers:
-      - name: demo-sdm
-        image: atomist/demo-sdm:0.1.0
+      - name: seed-sdm
+        image: atomist/seed-sdm:0.1.0
         imagePullPolicy: IfNotPresent
         env:
         - name: ATOMIST_DEPLOYMENT_NAME
-          value: demo-sdm
+          value: seed-sdm
         - name: ATOMIST_DEPLOYMENT_NAMESPACE
           valueFrom:
             fieldRef:
