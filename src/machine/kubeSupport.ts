@@ -27,14 +27,14 @@ import {
     SoftwareDeliveryMachineConfiguration,
     StagingEnvironment,
 } from "@atomist/sdm";
+import {IsNode} from "@atomist/sdm-core";
 import {
     createKubernetesData,
     KubernetesOptions,
 } from "@atomist/sdm-pack-k8";
-import {ProductionDeploymentGoal, StagingDeploymentGoal} from "./goals";
 import {kubernetesSupport} from "@atomist/sdm-pack-k8/dist";
-import {IsNode} from "@atomist/sdm-core";
 import {IsMaven} from "@atomist/sdm-pack-spring/dist";
+import {ProductionDeploymentGoal, StagingDeploymentGoal} from "./goals";
 
 export function addK8sSupport(sdm: SoftwareDeliveryMachine) {
     sdm.addExtensionPacks(kubernetesSupport({

@@ -15,7 +15,6 @@
  */
 
 import {
-    anySatisfied,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
 } from "@atomist/sdm";
@@ -24,21 +23,11 @@ import {
     disableDeploy,
     enableDeploy,
     executeTag,
-    IsNode,
     summarizeGoalsInGitHubStatus,
     TagGoal,
 } from "@atomist/sdm-core";
-import { kubernetesSupport } from "@atomist/sdm-pack-k8/dist";
-import {
-    HasSpringBootApplicationClass,
-    IsMaven,
-} from "@atomist/sdm-pack-spring";
 import { addDockerfile } from "../commands/addDockerfile";
-import {
-    ProductionDeploymentGoal,
-    StagingDeploymentGoal,
-} from "./goals";
-import {addK8sSupport, kubernetesDataCallback} from "./kubeSupport";
+import {addK8sSupport} from "./kubeSupport";
 import { addNodeSupport } from "./nodeSupport";
 import { addSpringSupport } from "./springSupport";
 
