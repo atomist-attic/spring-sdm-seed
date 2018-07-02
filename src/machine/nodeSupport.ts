@@ -39,6 +39,8 @@ import {
     VersionGoal,
 } from "@atomist/sdm-core";
 import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
+import {IsSimplifiedDeployment} from "../support/isSimplifiedDeployment";
+import {MaterialChangeToNodeRepo} from "../support/materialChangeToRepo";
 import { AutomationClientTagger } from "../support/tagger";
 import {
     BuildGoals,
@@ -61,8 +63,6 @@ import {
     executeReleaseVersion,
     NpmReleasePreparations,
 } from "./release";
-import {IsSimplifiedDeployment} from "../support/isSimplifiedDeployment";
-import {MaterialChangeToNodeRepo} from "../support/materialChangeToRepo";
 
 export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
 

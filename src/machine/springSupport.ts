@@ -39,19 +39,17 @@ import {
 } from "@atomist/sdm-core/internal/delivery/build/local/projectVersioner";
 import {
     IsMaven,
-    MavenBuilder,
     MavenProjectIdentifier,
     springBootGenerator,
     springBootTagger,
 } from "@atomist/sdm-pack-spring";
 import {CommonJavaGeneratorConfig, HasSpringBootApplicationClass} from "@atomist/sdm-pack-spring/dist";
-import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
 import { branchFromCommit } from "@atomist/sdm/api-helper/goal/executeBuild";
 import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/api-helper/log/DelimitedWriteProgressLogDecorator";
-import { createEphemeralProgressLog } from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
 import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
 import * as df from "dateformat";
 import { SuggestAddingDockerfile } from "../commands/addDockerfile";
+import {MaterialChangeToJvmRepo} from "../support/materialChangeToRepo";
 import {
     BuildGoals, DockerGoals,
     KubernetesDeployGoals,
@@ -68,7 +66,6 @@ import {
     executeReleaseTag,
     executeReleaseVersion,
 } from "./release";
-import {MaterialChangeToJvmRepo} from "../support/materialChangeToRepo";
 
 const MavenProjectVersioner: ProjectVersioner = async (status, p, log) => {
     const projectId = await MavenProjectIdentifier(p);
