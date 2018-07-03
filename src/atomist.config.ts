@@ -29,6 +29,8 @@ const machineOptions: ConfigureOptions = {
         "sdm.docker.hub.registry",
         "sdm.docker.hub.user",
         "sdm.docker.hub.password",
+        "sdm.generator.spring.project.owner",
+        "sdm.generator.spring.project.repo",
     ],
 };
 

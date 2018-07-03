@@ -21,7 +21,6 @@ import {
     Goal,
     goalContributors,
     hasFile,
-    IsDeployEnabled,
     JustBuildGoal,
     not,
     PushTest,
@@ -51,7 +50,6 @@ import {
     VersionGoal,
 } from "@atomist/sdm-core";
 import {executeBuild} from "@atomist/sdm/api-helper/goal/executeBuild";
-import {IsSimplifiedDeployment} from "../support/isSimplifiedDeployment";
 import {
     MaterialChangeToNodeRepo,
 } from "../support/materialChangeToRepo";
@@ -61,15 +59,11 @@ import {
     BuildReleaseGoals,
     DockerGoals,
     DockerReleaseGoals,
-    KubernetesDeployGoals,
-    ProductionDeploymentGoal,
     PublishGoal,
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
     ReleaseDocsGoal,
     ReleaseVersionGoal,
-    SimplifiedKubernetesDeployGoals,
-    StagingDeploymentGoal,
 } from "./goals";
 import {
     DockerReleasePreparations,
@@ -85,19 +79,6 @@ function doNothingOnNoMaterialChange() {
     return whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
         .itMeans("No material change to Java")
         .setGoals(NoGoals);
-}
-
-function simplifiedKubernetesDeploy() {
-    return whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
-        IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
-        .itMeans("Simplified Deploy")
-        .setGoals(SimplifiedKubernetesDeployGoals);
-}
-
-function deployWithKubernetes() {
-    return whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
-        .itMeans("Deploy")
-        .setGoals(KubernetesDeployGoals);
 }
 
 function releaseWithDocker() {
@@ -202,14 +183,6 @@ function releaseVersionUsingNode(sdm: SoftwareDeliveryMachine) {
         executeReleaseVersion(sdm.configuration.sdm.projectLoader, NodeProjectIdentifier), {pushTest: IsNode});
 }
 
-function addK8sSideEffectForGoal(sdm: SoftwareDeliveryMachine, goal: Goal) {
-    sdm.goalFulfillmentMapper.addSideEffect({
-        goal,
-        pushTest: IsNode,
-        sideEffectName: "@atomist/k8-automation",
-    });
-}
-
 function tagRepoAsAutomationClient(sdm: SoftwareDeliveryMachine) {
     sdm.addNewRepoWithCodeAction(tagRepo(AutomationClientTagger));
 }
@@ -225,8 +198,6 @@ function fingerprintUsingPackageLock(sdm: SoftwareDeliveryMachine) {
 export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
     sdm.addGoalContributions(goalContributors(
         doNothingOnNoMaterialChange(),
-        simplifiedKubernetesDeploy(),
-        deployWithKubernetes(),
         releaseWithDocker(),
         buildWithDocker(),
         releaseWithNoDockerfilePresent(),
@@ -243,11 +214,7 @@ export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
     releaseDocsUsingNode(sdm);
     releaseVersionUsingNode(sdm);
 
-    addK8sSideEffectForGoal(sdm, StagingDeploymentGoal);
-    addK8sSideEffectForGoal(sdm, ProductionDeploymentGoal);
-
     tagRepoAsAutomationClient(sdm);
     enableTsLintAutofixing(sdm);
     fingerprintUsingPackageLock(sdm);
-
 }

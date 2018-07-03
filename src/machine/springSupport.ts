@@ -253,6 +253,6 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
     releaseDocumentationWithMaven(sdm);
     releaseVersionWithMavenGAV(sdm);
 
-    const seedProject = new GitHubRepoRef("atomist-playground", "spring-rest-seed");
+    const seedProject = new GitHubRepoRef(sdm.configuration.sdm.generator.spring.project.owner, sdm.configuration.sdm.generator.spring.project.repo);
     addSpringGenerator(sdm, seedProject);
 }
