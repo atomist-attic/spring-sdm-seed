@@ -14,23 +14,35 @@
  * limitations under the License.
  */
 
-import { GitHubRepoRef } from "@atomist/automation-client/operations/common/GitHubRepoRef";
-import { GitProject } from "@atomist/automation-client/project/git/GitProject";
+import {GitHubRepoRef} from "@atomist/automation-client/operations/common/GitHubRepoRef";
+import {GitProject} from "@atomist/automation-client/project/git/GitProject";
 import {
     allSatisfied,
+    Builder,
+    BuildGoal,
     ExecuteGoalResult,
-    ExecuteGoalWithLog, FromAtomist, goalContributors,
-    hasFile, not,
+    ExecuteGoalWithLog,
+    FromAtomist,
+    Goal,
+    goalContributors,
+    hasFile,
+    JustBuildGoal,
+    not,
     RunWithLogContext,
-    SoftwareDeliveryMachine, ToDefaultBranch, whenPushSatisfies,
+    SoftwareDeliveryMachine,
+    ToDefaultBranch,
+    whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     DefaultDockerImageNameCreator,
     DockerBuildGoal,
     DockerOptions,
     executeDockerBuild,
-    executeVersioner, HasDockerfile, NoGoals,
-    tagRepo, ToPublicRepo,
+    executeVersioner,
+    HasDockerfile,
+    NoGoals,
+    tagRepo,
+    ToPublicRepo,
     VersionGoal,
 } from "@atomist/sdm-core";
 import {
@@ -43,15 +55,24 @@ import {
     springBootGenerator,
     springBootTagger,
 } from "@atomist/sdm-pack-spring";
-import {CommonJavaGeneratorConfig, HasSpringBootApplicationClass} from "@atomist/sdm-pack-spring/dist";
-import { branchFromCommit } from "@atomist/sdm/api-helper/goal/executeBuild";
-import { DelimitedWriteProgressLogDecorator } from "@atomist/sdm/api-helper/log/DelimitedWriteProgressLogDecorator";
-import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
+import {
+    CommonJavaGeneratorConfig,
+    HasSpringBootApplicationClass,
+    MavenBuilder,
+} from "@atomist/sdm-pack-spring/dist";
+import {
+    branchFromCommit,
+    executeBuild,
+} from "@atomist/sdm/api-helper/goal/executeBuild";
+import {DelimitedWriteProgressLogDecorator} from "@atomist/sdm/api-helper/log/DelimitedWriteProgressLogDecorator";
+import {createEphemeralProgressLog} from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
+import {spawnAndWatch} from "@atomist/sdm/api-helper/misc/spawned";
 import * as df from "dateformat";
-import { SuggestAddingDockerfile } from "../commands/addDockerfile";
+import {SuggestAddingDockerfile} from "../commands/addDockerfile";
 import {MaterialChangeToJvmRepo} from "../support/materialChangeToRepo";
 import {
-    BuildGoals, DockerGoals,
+    BuildGoals,
+    DockerGoals,
     KubernetesDeployGoals,
     PublishGoal,
     ReleaseArtifactGoal,
@@ -67,13 +88,12 @@ import {
     executeReleaseVersion,
 } from "./release";
 
-const MavenProjectVersioner: ProjectVersioner = async (status, p, log) => {
+const MavenProjectVersioner: ProjectVersioner = async (status, p) => {
     const projectId = await MavenProjectIdentifier(p);
     const baseVersion = projectId.version.replace(/-.*/, "");
     const branch = branchFromCommit(status.commit).split("/").join(".");
     const branchSuffix = (branch !== status.commit.repo.defaultBranch) ? `${branch}.` : "";
-    const version = `${baseVersion}-${branchSuffix}${df(new Date(), "yyyymmddHHMMss")}`;
-    return version;
+    return `${baseVersion}-${branchSuffix}${df(new Date(), "yyyymmddHHMMss")}`;
 };
 
 async function mvnVersionPreparation(p: GitProject, rwlc: RunWithLogContext): Promise<ExecuteGoalResult> {
@@ -87,13 +107,13 @@ async function mvnVersionPreparation(p: GitProject, rwlc: RunWithLogContext): Pr
         rwlc.context);
     return spawnAndWatch({
         command: "mvn", args: ["versions:set", `-DnewVersion=${version}`, "versions:commit"],
-    }, { cwd: p.baseDir }, rwlc.progressLog);
+    }, {cwd: p.baseDir}, rwlc.progressLog);
 }
 
 async function mvnPackagePreparation(p: GitProject, rwlc: RunWithLogContext): Promise<ExecuteGoalResult> {
     return spawnAndWatch({
         command: "mvn", args: ["package", "-DskipTests=true"],
-    }, { cwd: p.baseDir }, rwlc.progressLog);
+    }, {cwd: p.baseDir}, rwlc.progressLog);
 }
 
 const MavenPreparations = [mvnVersionPreparation, mvnPackagePreparation];
@@ -105,63 +125,134 @@ function noOpImplementation(action: string): ExecuteGoalWithLog {
         log.write(message);
         await log.flush();
         await log.close();
-        return Promise.resolve({ code: 0, message });
+        return Promise.resolve({code: 0, message});
     };
 }
 
-export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
-    sdm.addGoalContributions(goalContributors(
-        whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
-            .itMeans("No material change to Java")
-            .setGoals(NoGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
-            not(FromAtomist))
-            .itMeans("Spring Boot service to deploy")
-            .setGoals(KubernetesDeployGoals),
-        whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
-            .itMeans("Spring Boot service to Dockerize")
-            .setGoals(DockerGoals),
-        whenPushSatisfies(IsMaven, not(HasDockerfile))
-            .itMeans("Build")
-            .setGoals(BuildGoals)));
+function addBuilderForGoals(sdm: SoftwareDeliveryMachine, builder: Builder, goals: Goal[]) {
+    goals.forEach(goal => {
+        sdm.addGoalImplementation("Maven build", goal, executeBuild(sdm.configuration.sdm.projectLoader,
+            builder),
+            {
+                pushTest: IsMaven,
+                logInterpreter: builder.logInterpreter,
+            });
+    });
+}
+
+function enableMavenBuilder(sdm: SoftwareDeliveryMachine) {
+    const mavenBuilder = new MavenBuilder(sdm.configuration.sdm.artifactStore, createEphemeralProgressLog, sdm.configuration.sdm.projectLoader);
+    addBuilderForGoals(sdm, mavenBuilder, [BuildGoal, JustBuildGoal]);
+}
+
+function doNothingOnNoMaterialChange() {
+    return whenPushSatisfies(IsMaven, not(MaterialChangeToJvmRepo))
+        .itMeans("No material change to Java")
+        .setGoals(NoGoals);
+}
+
+function deploySpringBootService() {
+    return whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, ToDefaultBranch, HasDockerfile, ToPublicRepo,
+        not(FromAtomist))
+        .itMeans("Spring Boot service to deploy")
+        .setGoals(KubernetesDeployGoals);
+}
+
+function dockerizeSpringBootService() {
+    return whenPushSatisfies(IsMaven, HasSpringBootApplicationClass, HasDockerfile, ToPublicRepo, not(FromAtomist))
+        .itMeans("Spring Boot service to Dockerize")
+        .setGoals(DockerGoals);
+}
+
+function defaultMavenBuild() {
+    return whenPushSatisfies(IsMaven, not(HasDockerfile))
+        .itMeans("Build")
+        .setGoals(BuildGoals);
+}
+
+function versioningWithMaven(sdm: SoftwareDeliveryMachine) {
     sdm.addGoalImplementation("mvnVersioner", VersionGoal,
-        executeVersioner(sdm.configuration.sdm.projectLoader, MavenProjectVersioner), { pushTest: IsMaven })
-        .addGoalImplementation("mvnDockerBuild", DockerBuildGoal,
-            executeDockerBuild(
-                sdm.configuration.sdm.projectLoader,
-                DefaultDockerImageNameCreator,
-                MavenPreparations,
-                {
-                    ...sdm.configuration.sdm.docker.hub as DockerOptions,
-                    dockerfileFinder: async () => "Dockerfile",
-                }), { pushTest: IsMaven })
-        .addGoalImplementation("mvnPublish", PublishGoal,
-            noOpImplementation("Publish"), { pushTest: IsMaven })
-        .addGoalImplementation("mvnArtifactRelease", ReleaseArtifactGoal,
-            noOpImplementation("ReleaseArtifact"),
-            { pushTest: IsMaven })
-        .addGoalImplementation("mvnDockerRelease", ReleaseDockerGoal,
-            executeReleaseDocker(
-                sdm.configuration.sdm.projectLoader,
-                DockerReleasePreparations,
-                {
-                    ...sdm.configuration.sdm.docker.hub as DockerOptions,
-                }), { pushTest: allSatisfied(IsMaven, hasFile("Dockerfile")) })
-        .addGoalImplementation("tagRelease", ReleaseTagGoal,
-             executeReleaseTag(sdm.configuration.sdm.projectLoader))
-        .addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal,
-            noOpImplementation("ReleaseDocs"), { pushTest: IsMaven })
-        .addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
-            executeReleaseVersion(sdm.configuration.sdm.projectLoader, MavenProjectIdentifier), { pushTest: IsMaven });
+        executeVersioner(sdm.configuration.sdm.projectLoader, MavenProjectVersioner), {pushTest: IsMaven});
+}
 
-    sdm.addGenerators(springBootGenerator({
-                ...CommonJavaGeneratorConfig,
-                seed: () => new GitHubRepoRef("atomist-playground", "spring-rest-seed"),
-                groupId: "atomist",
-            }, {
-                intent: "create spring",
-            }))
-        .addNewRepoWithCodeActions(tagRepo(springBootTagger))
-        .addChannelLinkListeners(SuggestAddingDockerfile);
+function buildDockerWithMavenArtifacts(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("mvnDockerBuild", DockerBuildGoal,
+        executeDockerBuild(
+            sdm.configuration.sdm.projectLoader,
+            DefaultDockerImageNameCreator,
+            MavenPreparations,
+            {
+                ...sdm.configuration.sdm.docker.hub as DockerOptions,
+                dockerfileFinder: async () => "Dockerfile",
+            }), {pushTest: IsMaven});
+}
 
+function publishWithMaven(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("mvnPublish", PublishGoal,
+        noOpImplementation("Publish"), {pushTest: IsMaven});
+}
+
+function releaseWithMavenIfNoDockerfilePresent(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("mvnArtifactRelease", ReleaseArtifactGoal,
+        noOpImplementation("ReleaseArtifact"),
+        {pushTest: IsMaven});
+}
+
+function releaseWithDockerIfDockerfilePresent(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("mvnDockerRelease", ReleaseDockerGoal,
+        executeReleaseDocker(
+            sdm.configuration.sdm.projectLoader,
+            DockerReleasePreparations,
+            {
+                ...sdm.configuration.sdm.docker.hub as DockerOptions,
+            }), {pushTest: allSatisfied(IsMaven, hasFile("Dockerfile"))});
+}
+
+function releaseTag(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("tagRelease", ReleaseTagGoal,
+        executeReleaseTag(sdm.configuration.sdm.projectLoader));
+}
+
+function releaseDocumentationWithMaven(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("mvnDocsRelease", ReleaseDocsGoal,
+        noOpImplementation("ReleaseDocs"), {pushTest: IsMaven});
+}
+
+function releaseVersionWithMavenGAV(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("mvnVersionRelease", ReleaseVersionGoal,
+        executeReleaseVersion(sdm.configuration.sdm.projectLoader, MavenProjectIdentifier), {pushTest: IsMaven});
+}
+
+function addSpringGenerator(sdm: SoftwareDeliveryMachine, gitHubRepoRef) {
+    sdm.addGenerator(springBootGenerator({
+        ...CommonJavaGeneratorConfig,
+        seed: () => gitHubRepoRef,
+        groupId: "atomist",
+    }, {
+        intent: "create spring",
+    }))
+        .addNewRepoWithCodeAction(tagRepo(springBootTagger))
+        .addChannelLinkListener(SuggestAddingDockerfile);
+}
+
+export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
+    enableMavenBuilder(sdm);
+
+    sdm.addGoalContributions(goalContributors(
+        doNothingOnNoMaterialChange(),
+        deploySpringBootService(),
+        dockerizeSpringBootService(),
+        defaultMavenBuild()));
+
+    versioningWithMaven(sdm);
+    buildDockerWithMavenArtifacts(sdm);
+    publishWithMaven(sdm);
+    releaseWithMavenIfNoDockerfilePresent(sdm);
+    releaseWithDockerIfDockerfilePresent(sdm);
+    releaseTag(sdm);
+    releaseDocumentationWithMaven(sdm);
+    releaseVersionWithMavenGAV(sdm);
+
+    const seedProject = new GitHubRepoRef("atomist-playground", "spring-rest-seed");
+    addSpringGenerator(sdm, seedProject);
 }

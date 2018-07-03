@@ -37,16 +37,18 @@ import {IsMaven} from "@atomist/sdm-pack-spring/dist";
 import {ProductionDeploymentGoal, StagingDeploymentGoal} from "./goals";
 
 export function addK8sSupport(sdm: SoftwareDeliveryMachine) {
+    const stagingDeployment = {
+        goal: StagingDeploymentGoal,
+        pushTest: anySatisfied(IsMaven, IsNode),
+        callback: kubernetesDataCallback(sdm.configuration),
+    };
+    const productionDeployment = {
+        goal: ProductionDeploymentGoal,
+        pushTest: anySatisfied(IsMaven, IsNode),
+        callback: kubernetesDataCallback(sdm.configuration),
+    };
     sdm.addExtensionPacks(kubernetesSupport({
-        deployments: [{
-            goal: StagingDeploymentGoal,
-            pushTest: anySatisfied(IsMaven, IsNode),
-            callback: kubernetesDataCallback(sdm.configuration),
-        }, {
-            goal: ProductionDeploymentGoal,
-            pushTest: anySatisfied(IsMaven, IsNode),
-            callback: kubernetesDataCallback(sdm.configuration),
-        }],
+        deployments: [stagingDeployment, productionDeployment],
     }));
 }
 

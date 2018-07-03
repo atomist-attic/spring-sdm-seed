@@ -15,10 +15,19 @@
  */
 
 import {
-    allSatisfied, goalContributors,
-    hasFile, IsDeployEnabled,
+    allSatisfied,
+    Builder,
+    BuildGoal,
+    Goal,
+    goalContributors,
+    hasFile,
+    IsDeployEnabled,
+    JustBuildGoal,
     not,
-    SoftwareDeliveryMachine, ToDefaultBranch, whenPushSatisfies,
+    PushTest,
+    SoftwareDeliveryMachine,
+    ToDefaultBranch,
+    whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     DefaultDockerImageNameCreator,
@@ -26,11 +35,14 @@ import {
     DockerOptions,
     executeDockerBuild,
     executePublish,
-    executeVersioner, HasDockerfile, IsAtomistAutomationClient,
+    executeVersioner,
+    HasDockerfile,
+    IsAtomistAutomationClient,
     IsNode,
     nodeBuilder,
     NodeProjectIdentifier,
-    NodeProjectVersioner, NoGoals,
+    NodeProjectVersioner,
+    NoGoals,
     NpmOptions,
     NpmPreparations,
     PackageLockFingerprinter,
@@ -38,20 +50,25 @@ import {
     tslintFix,
     VersionGoal,
 } from "@atomist/sdm-core";
-import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
+import {executeBuild} from "@atomist/sdm/api-helper/goal/executeBuild";
 import {IsSimplifiedDeployment} from "../support/isSimplifiedDeployment";
-import {MaterialChangeToNodeRepo} from "../support/materialChangeToRepo";
-import { AutomationClientTagger } from "../support/tagger";
+import {
+    MaterialChangeToNodeRepo,
+} from "../support/materialChangeToRepo";
+import {AutomationClientTagger} from "../support/tagger";
 import {
     BuildGoals,
-    BuildReleaseGoals, DockerGoals, DockerReleaseGoals,
+    BuildReleaseGoals,
+    DockerGoals,
+    DockerReleaseGoals,
     KubernetesDeployGoals,
     ProductionDeploymentGoal,
     PublishGoal,
     ReleaseArtifactGoal,
     ReleaseDockerGoal,
     ReleaseDocsGoal,
-    ReleaseVersionGoal, SimplifiedKubernetesDeployGoals,
+    ReleaseVersionGoal,
+    SimplifiedKubernetesDeployGoals,
     StagingDeploymentGoal,
 } from "./goals";
 import {
@@ -64,100 +81,173 @@ import {
     NpmReleasePreparations,
 } from "./release";
 
-export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
+function doNothingOnNoMaterialChange() {
+    return whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
+        .itMeans("No material change to Java")
+        .setGoals(NoGoals);
+}
 
+function simplifiedKubernetesDeploy() {
+    return whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
+        IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
+        .itMeans("Simplified Deploy")
+        .setGoals(SimplifiedKubernetesDeployGoals);
+}
+
+function deployWithKubernetes() {
+    return whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
+        .itMeans("Deploy")
+        .setGoals(KubernetesDeployGoals);
+}
+
+function releaseWithDocker() {
+    return whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsAtomistAutomationClient)
+        .itMeans("Docker Release Build")
+        .setGoals(DockerReleaseGoals);
+}
+
+function buildWithDocker() {
+    return whenPushSatisfies(IsNode, HasDockerfile, IsAtomistAutomationClient)
+        .itMeans("Docker Build")
+        .setGoals(DockerGoals);
+}
+
+function releaseWithNoDockerfilePresent() {
+    return whenPushSatisfies(IsNode, not(HasDockerfile), ToDefaultBranch)
+        .itMeans("Release Build")
+        .setGoals(BuildReleaseGoals);
+}
+
+function defaultBuildNode() {
+    return whenPushSatisfies(IsNode, not(HasDockerfile))
+        .itMeans("Build")
+        .setGoals(BuildGoals);
+}
+
+function addBuilderForGoals(sdm: SoftwareDeliveryMachine, builder: Builder, pushtests: PushTest[], goals: Goal[]) {
+    goals.forEach(goal => {
+        sdm.addGoalImplementation("Maven build", goal, executeBuild(sdm.configuration.sdm.projectLoader,
+            builder),
+            {
+                pushTest: allSatisfied(...pushtests),
+                logInterpreter: builder.logInterpreter,
+            });
+    });
+}
+
+function enableNodeBuilder(sdm: SoftwareDeliveryMachine) {
     const hasPackageLock = hasFile("package-lock.json");
+    const nodeCiBuilder = nodeBuilder(sdm.configuration.sdm.projectLoader, "npm ci", "npm run build");
+    addBuilderForGoals(sdm, nodeCiBuilder, [IsNode, hasPackageLock], [BuildGoal, JustBuildGoal]);
+    const nodeInstallBuilder = nodeBuilder(sdm.configuration.sdm.projectLoader, "npm install", "npm run build");
+    addBuilderForGoals(sdm, nodeInstallBuilder, [IsNode, not(hasPackageLock)], [BuildGoal, JustBuildGoal]);
+}
 
-    sdm.addGoalContributions(goalContributors(
-        // Node
-        whenPushSatisfies(IsNode, not(MaterialChangeToNodeRepo))
-            .itMeans("No Material Change")
-            .setGoals(NoGoals),
-        // Simplified deployment for SDMs and automation clients
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient,
-            IsSimplifiedDeployment("demo-sdm", "sentry-automation"))
-            .itMeans("Simplified Deploy")
-            .setGoals(SimplifiedKubernetesDeployGoals),
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsDeployEnabled, IsAtomistAutomationClient)
-            .itMeans("Deploy")
-            .setGoals(KubernetesDeployGoals),
-        whenPushSatisfies(IsNode, HasDockerfile, ToDefaultBranch, IsAtomistAutomationClient)
-            .itMeans("Docker Release Build")
-            .setGoals(DockerReleaseGoals),
-        whenPushSatisfies(IsNode, HasDockerfile, IsAtomistAutomationClient)
-            .itMeans("Docker Build")
-            .setGoals(DockerGoals),
-        whenPushSatisfies(IsNode, not(HasDockerfile), ToDefaultBranch)
-            .itMeans("Release Build")
-            .setGoals(BuildReleaseGoals),
-        whenPushSatisfies(IsNode, not(HasDockerfile))
-            .itMeans("Build")
-            .setGoals(BuildGoals),
-    ));
-    sdm.addBuildRules(
-        build.when(IsNode, hasPackageLock)
-            .itMeans("npm run build")
-            .set(nodeBuilder(sdm.configuration.sdm.projectLoader, "npm ci", "npm run build")),
-        build.when(IsNode, not(hasPackageLock))
-            .itMeans("npm run build (no package-lock.json)")
-            .set(nodeBuilder(sdm.configuration.sdm.projectLoader, "npm install", "npm run build")));
-
+function versioningUsingNode(sdm: SoftwareDeliveryMachine) {
     sdm.addGoalImplementation("nodeVersioner", VersionGoal,
-        executeVersioner(sdm.configuration.sdm.projectLoader, NodeProjectVersioner), { pushTest: IsNode })
-        .addGoalImplementation("nodeDockerBuild", DockerBuildGoal,
-            executeDockerBuild(
-                sdm.configuration.sdm.projectLoader,
-                DefaultDockerImageNameCreator,
-                NpmPreparations,
-                {
-                    ...sdm.configuration.sdm.docker.hub as DockerOptions,
-                    dockerfileFinder: async () => "Dockerfile",
-                }), { pushTest: IsNode })
-        .addGoalImplementation("nodePublish", PublishGoal,
-            executePublish(
-                sdm.configuration.sdm.projectLoader,
-                NodeProjectIdentifier,
-                NpmPreparations,
-                {
-                    ...sdm.configuration.sdm.npm as NpmOptions,
-                }), { pushTest: IsNode })
-        .addGoalImplementation("nodeNpmRelease", ReleaseArtifactGoal,
-            executeReleaseNpm(
-                sdm.configuration.sdm.projectLoader,
-                NodeProjectIdentifier,
-                NpmReleasePreparations,
-                {
-                    ...sdm.configuration.sdm.npm as NpmOptions,
-                }), { pushTest: IsNode })
-        .addGoalImplementation("nodeDockerRelease", ReleaseDockerGoal,
-            executeReleaseDocker(
-                sdm.configuration.sdm.projectLoader,
-                DockerReleasePreparations,
-                {
-                    ...sdm.configuration.sdm.docker.hub as DockerOptions,
-                }), { pushTest: allSatisfied(IsNode, hasFile("Dockerfile")) })
-        // Why is the push test not enough to prevent a duplicate goal error from happening
-        // .addGoalImplementation("tagRelease", ReleaseTagGoal,
-        //     executeReleaseTag(sdm.opts.projectLoader), { pushTest: IsNode })
-        .addGoalImplementation("nodeDocsRelease", ReleaseDocsGoal,
-            executeReleaseDocs(sdm.configuration.sdm.projectLoader, DocsReleasePreparations), { pushTest: IsNode })
-        .addGoalImplementation("nodeVersionRelease", ReleaseVersionGoal,
-            executeReleaseVersion(sdm.configuration.sdm.projectLoader, NodeProjectIdentifier), { pushTest: IsNode });
+        executeVersioner(sdm.configuration.sdm.projectLoader, NodeProjectVersioner), {pushTest: IsNode});
+}
 
-    sdm.goalFulfillmentMapper
-        .addSideEffect({
-            goal: StagingDeploymentGoal,
-            pushTest: IsNode,
-            sideEffectName: "@atomist/k8-automation",
-        })
-        .addSideEffect({
-            goal: ProductionDeploymentGoal,
-            pushTest: IsNode,
-            sideEffectName: "@atomist/k8-automation",
-        });
+function buildDockerImageWithNodeOutput(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("nodeDockerBuild", DockerBuildGoal,
+        executeDockerBuild(
+            sdm.configuration.sdm.projectLoader,
+            DefaultDockerImageNameCreator,
+            NpmPreparations,
+            {
+                ...sdm.configuration.sdm.docker.hub as DockerOptions,
+                dockerfileFinder: async () => "Dockerfile",
+            }), {pushTest: IsNode});
+}
 
-    sdm.addNewRepoWithCodeActions(tagRepo(AutomationClientTagger))
-        .addAutofixes(tslintFix)
-        .addFingerprinterRegistrations(new PackageLockFingerprinter());
+function publishUsingNode(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("nodePublish", PublishGoal,
+        executePublish(
+            sdm.configuration.sdm.projectLoader,
+            NodeProjectIdentifier,
+            NpmPreparations,
+            {
+                ...sdm.configuration.sdm.npm as NpmOptions,
+            }), {pushTest: IsNode});
+}
+
+function releaseArtifactUsingNode(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("nodeNpmRelease", ReleaseArtifactGoal,
+        executeReleaseNpm(
+            sdm.configuration.sdm.projectLoader,
+            NodeProjectIdentifier,
+            NpmReleasePreparations,
+            {
+                ...sdm.configuration.sdm.npm as NpmOptions,
+            }), {pushTest: IsNode});
+}
+
+function releaseDockerImage(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("nodeDockerRelease", ReleaseDockerGoal,
+        executeReleaseDocker(
+            sdm.configuration.sdm.projectLoader,
+            DockerReleasePreparations,
+            {
+                ...sdm.configuration.sdm.docker.hub as DockerOptions,
+            }), {pushTest: allSatisfied(IsNode, hasFile("Dockerfile"))});
+}
+
+function releaseDocsUsingNode(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("nodeDocsRelease", ReleaseDocsGoal,
+        executeReleaseDocs(sdm.configuration.sdm.projectLoader, DocsReleasePreparations), {pushTest: IsNode});
+}
+
+function releaseVersionUsingNode(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalImplementation("nodeVersionRelease", ReleaseVersionGoal,
+        executeReleaseVersion(sdm.configuration.sdm.projectLoader, NodeProjectIdentifier), {pushTest: IsNode});
+}
+
+function addK8sSideEffectForGoal(sdm: SoftwareDeliveryMachine, goal: Goal) {
+    sdm.goalFulfillmentMapper.addSideEffect({
+        goal,
+        pushTest: IsNode,
+        sideEffectName: "@atomist/k8-automation",
+    });
+}
+
+function tagRepoAsAutomationClient(sdm: SoftwareDeliveryMachine) {
+    sdm.addNewRepoWithCodeAction(tagRepo(AutomationClientTagger));
+}
+
+function enableTsLintAutofixing(sdm: SoftwareDeliveryMachine) {
+    sdm.addAutofix(tslintFix);
+}
+
+function fingerprintUsingPackageLock(sdm: SoftwareDeliveryMachine) {
+    sdm.addFingerprinterRegistration(new PackageLockFingerprinter());
+}
+
+export function addNodeSupport(sdm: SoftwareDeliveryMachine) {
+    sdm.addGoalContributions(goalContributors(
+        doNothingOnNoMaterialChange(),
+        simplifiedKubernetesDeploy(),
+        deployWithKubernetes(),
+        releaseWithDocker(),
+        buildWithDocker(),
+        releaseWithNoDockerfilePresent(),
+        defaultBuildNode(),
+    ));
+
+    enableNodeBuilder(sdm);
+
+    versioningUsingNode(sdm);
+    buildDockerImageWithNodeOutput(sdm);
+    publishUsingNode(sdm);
+    releaseArtifactUsingNode(sdm);
+    releaseDockerImage(sdm);
+    releaseDocsUsingNode(sdm);
+    releaseVersionUsingNode(sdm);
+
+    addK8sSideEffectForGoal(sdm, StagingDeploymentGoal);
+    addK8sSideEffectForGoal(sdm, ProductionDeploymentGoal);
+
+    tagRepoAsAutomationClient(sdm);
+    enableTsLintAutofixing(sdm);
+    fingerprintUsingPackageLock(sdm);
 
 }
