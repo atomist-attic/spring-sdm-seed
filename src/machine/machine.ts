@@ -26,7 +26,6 @@ import {
     summarizeGoalsInGitHubStatus,
     TagGoal,
 } from "@atomist/sdm-core";
-import {addK8sSupport} from "./kubeSupport";
 import {addNodeSupport} from "./nodeSupport";
 import {addSpringSupport} from "./springSupport";
 
@@ -40,7 +39,6 @@ export function machine(
     });
     addNodeSupport(sdm);
     addSpringSupport(sdm);
-    addK8sSupport(sdm);
     sdm.addCommand(EnableDeploy);
     sdm.addCommand(DisableDeploy);
     sdm.addGoalImplementation("tag", TagGoal,
