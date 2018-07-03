@@ -66,17 +66,6 @@ function materialChangeToRepo(
  * Veto if change to deployment unit doesn't seem important enough to
  * build and deploy
  */
-export const MaterialChangeToNodeRepo: PushTest = materialChangeToRepo(
-    "Node.js",
-    ["js", "ts", "json", "graphql"],
-    ["Dockerfile", ".dockerignore"],
-    [".atomist/"],
-);
-
-/**
- * Veto if change to deployment unit doesn't seem important enough to
- * build and deploy
- */
 export const MaterialChangeToJvmRepo: PushTest = materialChangeToRepo(
     "JVM",
     ["java", "html", "json", "yml", "xml", "sh", "kt", "properties"],
