@@ -23,8 +23,6 @@ import { machine } from "./machine/machine";
 
 const machineOptions: ConfigureOptions = {
     requiredConfigurationValues: [
-        "sdm.seed.spring.owner",
-        "sdm.seed.spring.repo",
     ],
 };
 
