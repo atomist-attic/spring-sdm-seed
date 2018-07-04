@@ -22,14 +22,14 @@ import {
     createSoftwareDeliveryMachine,
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
-import {addSpringSupport} from "./springSupport";
+import { addSpringSupport } from "./springSupport";
 
 export function machine(
     configuration: SoftwareDeliveryMachineConfiguration,
 ): SoftwareDeliveryMachine {
 
     const sdm = createSoftwareDeliveryMachine({
-        name: "Kubernetes Seed Software Delivery Machine",
+        name: "Minimal Seed Software Delivery Machine",
         configuration,
     });
     addSpringSupport(sdm);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {GitHubRepoRef} from "@atomist/automation-client/operations/common/GitHubRepoRef";
+import { GitHubRepoRef } from "@atomist/automation-client/operations/common/GitHubRepoRef";
 import {
     Builder,
     BuildGoal,
@@ -41,9 +41,7 @@ import {
     tagRepo,
     VersionGoal,
 } from "@atomist/sdm-core";
-import {
-    ProjectVersioner,
-} from "@atomist/sdm-core/internal/delivery/build/local/projectVersioner";
+import { ProjectVersioner } from "@atomist/sdm-core/internal/delivery/build/local/projectVersioner";
 import {
     IsMaven,
     MavenProjectIdentifier,
@@ -55,17 +53,18 @@ import {
     HasSpringBootApplicationClass,
     MavenBuilder,
 } from "@atomist/sdm-pack-spring/dist";
-import {executableJarDeployer} from "@atomist/sdm-pack-spring/dist/support/java/deploy/executableJarDeployer";
-import {ListLocalDeploys} from "@atomist/sdm-pack-spring/dist/support/maven/deploy/listLocalDeploys";
-import {SpringBootSuccessPatterns} from "@atomist/sdm-pack-spring/dist/support/spring/deploy/localSpringBootDeployers";
+import { executableJarDeployer } from "@atomist/sdm-pack-spring/dist/support/java/deploy/executableJarDeployer";
+import { ListLocalDeploys } from "@atomist/sdm-pack-spring/dist/support/maven/deploy/listLocalDeploys";
+import { SpringBootSuccessPatterns } from "@atomist/sdm-pack-spring/dist/support/spring/deploy/localSpringBootDeployers";
 import * as deploy from "@atomist/sdm/api-helper/dsl/deployDsl";
 import {
     branchFromCommit,
     executeBuild,
 } from "@atomist/sdm/api-helper/goal/executeBuild";
-import {createEphemeralProgressLog} from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
+import { createEphemeralProgressLog } from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
 import * as df from "dateformat";
-import {MaterialChangeToJvmRepo} from "../support/materialChangeToRepo";
+import * as _ from "lodash";
+import { MaterialChangeToJvmRepo } from "../support/materialChangeToRepo";
 import {
     BuildGoals,
     BuildWithLocalDeploymentGoals,
@@ -161,10 +160,13 @@ function springBootMavenArgs(si: StartupInfo): string[] {
     ];
 }
 
-function addSpringGenerator(sdm: SoftwareDeliveryMachine, gitHubRepoRef) {
+function addSpringGenerator(sdm: SoftwareDeliveryMachine) {
+    const owner = _.get(sdm.configuration, "sdm.seed.spring.owner", "spring-projects");
+    const repo = _.get(sdm.configuration, "sdm.seed.spring.repo", "spring-petclinic");
+    const seedProject = new GitHubRepoRef(owner, repo);
     sdm.addGenerator(springBootGenerator({
         ...CommonJavaGeneratorConfig,
-        seed: () => gitHubRepoRef,
+        seed: () => seedProject,
         groupId: "atomist",
     }, {
         intent: "create spring",
@@ -181,10 +183,7 @@ export function addSpringSupport(sdm: SoftwareDeliveryMachine) {
     ));
 
     versioningWithMaven(sdm);
-
     configureLocalSpringBootDeployment(sdm);
-
-    const seedProject = new GitHubRepoRef(sdm.configuration.sdm.generator.spring.project.owner, sdm.configuration.sdm.generator.spring.project.repo);
-    addSpringGenerator(sdm, seedProject);
+    addSpringGenerator(sdm);
     enableSpringBootRepoTagging(sdm);
 }
