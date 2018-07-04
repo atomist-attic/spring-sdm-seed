@@ -23,14 +23,8 @@ import { machine } from "./machine/machine";
 
 const machineOptions: ConfigureOptions = {
     requiredConfigurationValues: [
-        "sdm",
-        "sdm.docker",
-        "sdm.docker.hub",
-        "sdm.docker.hub.registry",
-        "sdm.docker.hub.user",
-        "sdm.docker.hub.password",
-        "sdm.generator.spring.project.owner",
-        "sdm.generator.spring.project.repo",
+        "sdm.seed.spring.owner",
+        "sdm.seed.spring.repo",
     ],
 };
 
