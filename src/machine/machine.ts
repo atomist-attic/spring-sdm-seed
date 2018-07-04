@@ -20,15 +20,8 @@ import {
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
-    disableDeploy,
-    enableDeploy,
-    executeTag,
     summarizeGoalsInGitHubStatus,
-    TagGoal,
 } from "@atomist/sdm-core";
-import { addDockerfile } from "../commands/addDockerfile";
-import {addK8sSupport} from "./kubeSupport";
-import { addNodeSupport } from "./nodeSupport";
 import { addSpringSupport } from "./springSupport";
 
 export function machine(
@@ -36,15 +29,10 @@ export function machine(
 ): SoftwareDeliveryMachine {
 
     const sdm = createSoftwareDeliveryMachine({
-            name: "Kubernetes Demo Software Delivery Machine",
-            configuration,
-        });
-    addNodeSupport(sdm);
+        name: "Minimal Seed Software Delivery Machine",
+        configuration,
+    });
     addSpringSupport(sdm);
-    addK8sSupport(sdm);
-    sdm.addSupportingCommands(enableDeploy, disableDeploy, () => addDockerfile(sdm));
-    sdm.addGoalImplementation("tag", TagGoal,
-        executeTag(sdm.configuration.sdm.projectLoader));
 
     summarizeGoalsInGitHubStatus(sdm);
 
