@@ -73,6 +73,7 @@ import {
     BuildWithLocalDeploymentGoals,
 } from "./goals";
 import {executableJarDeployer} from "@atomist/sdm-pack-spring/dist/support/java/deploy/executableJarDeployer";
+import {SdmVerification} from "@atomist/sdm/api-helper/listener/executeVerifyEndpoint";
 
 const MavenProjectVersioner: ProjectVersioner = async (status, p) => {
     const projectId = await MavenProjectIdentifier(p);
@@ -125,6 +126,11 @@ function enableSpringBootRepoTagging(sdm: SoftwareDeliveryMachine) {
     sdm.addNewRepoWithCodeAction(tagRepo(springBootTagger));
 }
 
+function addLocalEndpointVerification(sdm: SoftwareDeliveryMachine) {
+    sdm.addVerifyImplementation()
+    sdm.addEndpointVerificationListener(lookFor200OnEndpointRootGet());
+}
+
 function configureLocalSpringBootDeployment(sdm: SoftwareDeliveryMachine) {
     sdm.addDeployRules(
         deploy.when(IsMaven, HasSpringBootApplicationClass)
@@ -139,7 +145,7 @@ function configureLocalSpringBootDeployment(sdm: SoftwareDeliveryMachine) {
         .addCommand(ListLocalDeploys)
         .addCommand(EnableDeploy)
         .addCommand(DisableDeploy);
-    sdm.addEndpointVerificationListener(lookFor200OnEndpointRootGet());
+    addLocalEndpointVerification(sdm);
 }
 
 function springBootExecutableJarDeployer(): Deployer<ManagedDeploymentTargetInfo> {

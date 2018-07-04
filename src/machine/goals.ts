@@ -33,6 +33,7 @@ import {
 } from "@atomist/sdm";
 import {
     DockerBuildGoal,
+    LocalEndpointGoal,
     TagGoal,
     VersionGoal,
 } from "@atomist/sdm-core";
@@ -64,4 +65,5 @@ export const BuildWithLocalDeploymentGoals = new Goals(
     BuildGoal,
     ArtifactGoal,
     new GoalWithPrecondition(LocalDeploymentGoal.definition, ArtifactGoal),
+    new GoalWithPrecondition(LocalEndpointGoal.definition, LocalDeploymentGoal),
 );
