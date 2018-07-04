@@ -21,23 +21,16 @@ import {
     AutofixGoal,
     BuildGoal,
     FingerprintGoal,
-    Goal,
     Goals,
     GoalWithPrecondition,
-    IndependentOfEnvironment,
     LocalDeploymentGoal,
-    ProductionEnvironment,
     PushReactionGoal,
     ReviewGoal,
-    StagingEnvironment,
 } from "@atomist/sdm";
 import {
-    DockerBuildGoal,
     LocalEndpointGoal,
-    TagGoal,
     VersionGoal,
 } from "@atomist/sdm-core";
-import {LocalDeploymentGoals} from "@atomist/sdm-core/pack/well-known-goals/httpServiceGoals";
 
 // GOALSET Definition
 
