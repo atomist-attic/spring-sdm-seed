@@ -161,8 +161,8 @@ function springBootMavenArgs(si: StartupInfo): string[] {
 }
 
 function addSpringGenerator(sdm: SoftwareDeliveryMachine) {
-    const owner = _.get(sdm.configuration, "sdm.seed.spring.owner", "spring-projects");
-    const repo = _.get(sdm.configuration, "sdm.seed.spring.repo", "spring-petclinic");
+    const owner = _.get(sdm.configuration, "sdm.seed.spring.owner", "atomist-seeds");
+    const repo = _.get(sdm.configuration, "sdm.seed.spring.repo", "spring-rest-seed");
     const seedProject = new GitHubRepoRef(owner, repo);
     sdm.addGenerator(springBootGenerator({
         ...CommonJavaGeneratorConfig,
