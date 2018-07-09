@@ -58,7 +58,6 @@ import { ListLocalDeploys } from "@atomist/sdm-pack-spring/dist/support/maven/de
 import { SpringBootSuccessPatterns } from "@atomist/sdm-pack-spring/dist/support/spring/deploy/localSpringBootDeployers";
 import * as deploy from "@atomist/sdm/api-helper/dsl/deployDsl";
 import {
-    branchFromCommit,
     executeBuild,
 } from "@atomist/sdm/api-helper/goal/executeBuild";
 import { createEphemeralProgressLog } from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
@@ -73,8 +72,8 @@ import {
 const MavenProjectVersioner: ProjectVersioner = async (status, p) => {
     const projectId = await MavenProjectIdentifier(p);
     const baseVersion = projectId.version.replace(/-.*/, "");
-    const branch = branchFromCommit(status.commit).split("/").join(".");
-    const branchSuffix = (branch !== status.commit.repo.defaultBranch) ? `${branch}.` : "";
+    const branch = status.branch.split("/").join(".");
+    const branchSuffix = (branch !== status.push.repo.defaultBranch) ? `${branch}.` : "";
     return `${baseVersion}-${branchSuffix}${df(new Date(), "yyyymmddHHMMss")}`;
 };
 
@@ -90,7 +89,7 @@ function addBuilderForGoals(sdm: SoftwareDeliveryMachine, builder: Builder, goal
 }
 
 function enableMavenBuilder(sdm: SoftwareDeliveryMachine) {
-    const mavenBuilder = new MavenBuilder(sdm.configuration.sdm.artifactStore, createEphemeralProgressLog, sdm.configuration.sdm.projectLoader);
+    const mavenBuilder = new MavenBuilder(sdm);
     addBuilderForGoals(sdm, mavenBuilder, [BuildGoal, JustBuildGoal]);
 }
 

@@ -20,11 +20,11 @@
     "url": "https://github.com/atomist/seed-sdm/issues"
   },
   "dependencies": {
-    "@atomist/automation-client": "^0.18.0-20180702155841",
-    "@atomist/sdm": "^0.3.1-20180703023241",
-    "@atomist/sdm-core": "^0.3.2-20180629182304",
+    "@atomist/automation-client": "^0.18.0-20180705162739",
+    "@atomist/sdm": "^0.3.2-20180709120101",
+    "@atomist/sdm-core": "https://r.atomist.com/1375083844",
     "@atomist/sdm-pack-k8": "^0.1.1-20180625190611",
-    "@atomist/sdm-pack-spring": "^0.1.7-20180703035313",
+    "@atomist/sdm-pack-spring": "^0.1.7-20180709015407",
     "@atomist/slack-messages": "^0.12.1",
     "@typed/curry": "^1.0.1",
     "dateformat": "^3.0.3",
