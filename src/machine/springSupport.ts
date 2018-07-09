@@ -60,7 +60,6 @@ import * as deploy from "@atomist/sdm/api-helper/dsl/deployDsl";
 import {
     executeBuild,
 } from "@atomist/sdm/api-helper/goal/executeBuild";
-import { createEphemeralProgressLog } from "@atomist/sdm/api-helper/log/EphemeralProgressLog";
 import * as df from "dateformat";
 import * as _ from "lodash";
 import { MaterialChangeToJvmRepo } from "../support/materialChangeToRepo";
