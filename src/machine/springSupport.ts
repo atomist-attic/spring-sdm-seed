@@ -154,7 +154,7 @@ function springBootMavenArgs(si: StartupInfo): string[] {
     return [
         `--server.port=${si.port}`,
         `--server.contextPath=${si.contextRoot}`,
-        `--server.servlet.contextPath${si.contextRoot}"`,
+        `--server.servlet.contextPath=${si.contextRoot}"`,
     ];
 }
 
