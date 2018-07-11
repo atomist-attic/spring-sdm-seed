@@ -37,7 +37,7 @@ Apache License 2.0 - [http://www.apache.org/licenses/LICENSE-2.0](http://www.apa
 |------|---------|-----------|------------|
 |`@atomist/sdm-core`|`0.3.2-20180709232810`|Atomist, Inc.|[https://github.com/atomist/sdm-core](https://github.com/atomist/sdm-core)|
 |`@atomist/sdm-pack-k8`|`0.1.2-latest-sdm.20180706213449`|Atomist, Inc.|[https://github.com/atomist/sdm-pack-k8](https://github.com/atomist/sdm-pack-k8)|
-|`@atomist/sdm-pack-spring`|`0.1.7-stronger-typed.20180709234342`|Atomist, Inc.|[https://github.com/atomist/sdm-pack-spring](https://github.com/atomist/sdm-pack-spring)|
+|`@atomist/sdm-pack-spring`|`0.1.7-20180711090807`|Atomist, Inc.|[https://github.com/atomist/sdm-pack-spring](https://github.com/atomist/sdm-pack-spring)|
 |`@atomist/sdm`|`0.3.2-20180710050414`|Atomist, Inc.|[https://github.com/atomist/sdm](https://github.com/atomist/sdm)|
 |`@atomist/seed-sdm`|`0.1.0`|Atomist, Inc.|[https://github.com/atomist/seed-sdm](https://github.com/atomist/seed-sdm)|
 |`@atomist/slack-messages`|`0.12.1`|Atomist|[https://github.com/atomist/slack-messages](https://github.com/atomist/slack-messages)|
