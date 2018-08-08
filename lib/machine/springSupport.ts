@@ -43,19 +43,17 @@ import {
 } from "@atomist/sdm-core";
 import { ProjectVersioner } from "@atomist/sdm-core/internal/delivery/build/local/projectVersioner";
 import {
+    CommonJavaGeneratorConfig,
+    executableJarDeployer,
+    HasSpringBootApplicationClass,
     IsMaven,
+    ListLocalDeploys,
+    MavenBuilder,
     MavenProjectIdentifier,
     springBootGenerator,
+    SpringBootSuccessPatterns,
     springBootTagger,
 } from "@atomist/sdm-pack-spring";
-import {
-    CommonJavaGeneratorConfig,
-    HasSpringBootApplicationClass,
-    MavenBuilder,
-} from "@atomist/sdm-pack-spring/dist";
-import { executableJarDeployer } from "@atomist/sdm-pack-spring/dist/support/java/deploy/executableJarDeployer";
-import { ListLocalDeploys } from "@atomist/sdm-pack-spring/dist/support/maven/deploy/listLocalDeploys";
-import { SpringBootSuccessPatterns } from "@atomist/sdm-pack-spring/dist/support/spring/deploy/localSpringBootDeployers";
 import * as deploy from "@atomist/sdm/api-helper/dsl/deployDsl";
 import {
     executeBuild,
@@ -112,11 +110,11 @@ function springBootApplicationBuild() {
 
 function versioningWithMaven(sdm: SoftwareDeliveryMachine) {
     sdm.addGoalImplementation("mvnVersioner", VersionGoal,
-        executeVersioner(sdm.configuration.sdm.projectLoader, MavenProjectVersioner), {pushTest: IsMaven});
+        executeVersioner(sdm.configuration.sdm.projectLoader, MavenProjectVersioner), { pushTest: IsMaven });
 }
 
 function enableSpringBootRepoTagging(sdm: SoftwareDeliveryMachine) {
-    sdm.addNewRepoWithCodeAction(tagRepo(springBootTagger));
+    sdm.addNewRepoWithCodeListener(tagRepo(springBootTagger));
 }
 
 function addLocalEndpointVerification(sdm: SoftwareDeliveryMachine) {
@@ -134,7 +132,7 @@ function configureLocalSpringBootDeployment(sdm: SoftwareDeliveryMachine) {
                     deployer: springBootExecutableJarDeployer(),
                     targeter: ManagedDeploymentTargeter,
                 },
-            ))
+        ))
         .addCommand(ListLocalDeploys)
         .addCommand(EnableDeploy)
         .addCommand(DisableDeploy);
@@ -167,8 +165,8 @@ function addSpringGenerator(sdm: SoftwareDeliveryMachine) {
         seed: () => seedProject,
         groupId: "atomist",
     }, {
-        intent: "create spring",
-    }));
+            intent: "create spring",
+        }));
 }
 
 export function addSpringSupport(sdm: SoftwareDeliveryMachine) {

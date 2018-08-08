@@ -25,16 +25,8 @@ RUN git config --global user.email "bot@atomist.com" \
 RUN curl -sL https://deb.nodesource.com/setup_9.x | bash - \
     && apt-get update \
     && apt-get install -y nodejs \
-    && npm i -g npm@6.0.1 \
+    && npm i -g npm@6.3.0 \
     && rm -rf /var/lib/apt/lists/*
-
-RUN curl -sL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.8.12/bin/linux/amd64/kubectl \
-    && chmod +x /usr/local/bin/kubectl \
-    && kubectl version --client
-
-RUN curl -sL -o /usr/local/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein \
-    && chmod 755 /usr/local/bin/lein \
-    && lein version
 
 # Create app directory
 RUN mkdir -p /opt/app
