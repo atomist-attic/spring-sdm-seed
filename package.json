@@ -8,13 +8,6 @@
     "type": "git",
     "url": "https://github.com/atomist/seed-sdm.git"
   },
-  "keywords": [
-    "atomist",
-    "automation",
-    "github",
-    "kubernetes",
-    "sdm"
-  ],
   "homepage": "https://github.com/atomist/seed-sdm#readme",
   "bugs": {
     "url": "https://github.com/atomist/seed-sdm/issues"
