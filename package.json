@@ -21,9 +21,10 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "dependencies": {
-    "@atomist/automation-client": "^0.20.3",
-    "@atomist/sdm": "^0.4.1",
-    "@atomist/sdm-core": "^0.4.1",
+    "@atomist/automation-client": "^0.21.0",
+    "@atomist/sdm": "^0.4.2",
+    "@atomist/sdm-core": "^0.4.2",
+    "@atomist/sdm-local": "^0.1.7-20180818055647",
     "@atomist/sdm-pack-spring": "^0.1.9",
     "@types/dateformat": "^1.0.1",
     "@types/lodash": "^4.14.108",
