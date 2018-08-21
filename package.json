@@ -52,7 +52,7 @@
     "test": "test"
   },
   "scripts": {
-    "autostart": "nodemon --watch index.ts,lib --ext ts --exec ts-node -- node_modules/@atomist/automation-client/start.client.js",
+    "autostart": "nodemon --watch index.ts --watch lib --ext ts --delay 4 --exec ts-node -- node_modules/@atomist/automation-client/bin/start.js",
     "autotest": "supervisor --watch index.ts,lib,test --extensions ts --no-restart-on exit --quiet --exec npm -- test",
     "build": "run-s compile test lint doc",
     "clean": "run-p clean:compile clean:doc clean:run",

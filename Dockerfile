@@ -25,12 +25,17 @@ ENV SUPPRESS_NO_CONFIG_WARNING true
 
 ENTRYPOINT ["dumb-init", "node", "--trace-warnings", "--expose_gc", "--optimize_for_size", "--always_compact", "--max_old_space_size=384"]
 
-CMD ["node_modules/@atomist/automation-client/bin/start.js"]
+CMD ["node_modules/.bin/atm-start"]
 
 RUN apt-get update && apt-get install -y \
         build-essential \
         git \
+        default-jdk \
+        maven \
     && rm -rf /var/lib/apt/lists/*
+
+RUN git config --global user.email "bot@atomist.com" \
+    && git config --global user.name "Atomist Bot"
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
     && apt-get install -y nodejs \

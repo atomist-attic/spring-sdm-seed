@@ -8,7 +8,7 @@
             "env": [
               {
                 "name": "ATOMIST_DEPLOYMENT_NAME",
-                "value": "demo-sdm"
+                "value": "seed-sdm"
               },
               {
                 "name": "ATOMIST_DEPLOYMENT_NAMESPACE",
@@ -71,52 +71,31 @@
             "resources": {
               "limits": {
                 "cpu": "2000m",
-                "memory": "3000Mi"
+                "memory": "3072Mi"
               },
               "requests": {
                 "cpu": "500m",
-                "memory": "1000Mi"
+                "memory": "1024Mi"
               }
             },
             "volumeMounts": [
               {
-                "name": "docker-sock",
-                "mountPath": "/var/run/docker.sock"
-              },
-              {
                 "name": "automation",
                 "mountPath": "/opt/atm",
                 "readOnly": true
-              },
-              {
-                "name": "data",
-                "mountPath": "/opt/data"
               }
             ]
           }
         ],
         "volumes": [
           {
-            "name": "docker-sock",
-            "hostPath": {
-              "path": "/var/run/docker.sock"
-            }
-          },
-          {
             "name": "automation",
             "secret": {
               "secretName": "automation"
             }
-          },
-          {
-            "name": "data",
-            "hostPath": {
-              "path": "/mnt/disks/ssd0/data/demo-sdm",
-              "type": "DirectoryOrCreate"
-            }
           }
         ],
-        "terminationGracePeriodSeconds": 180
+        "terminationGracePeriodSeconds": 30
       }
     }
   }
