@@ -21,17 +21,17 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "dependencies": {
-    "@atomist/automation-client": "^0.21.3",
-    "@atomist/sdm": "^0.4.3",
-    "@atomist/sdm-core": "^0.4.4",
-    "@atomist/sdm-pack-spring": "^0.1.9",
+    "@atomist/automation-client": "^0.21.5-20180822020855",
+    "@atomist/sdm": "^0.4.4-20180821142646",
+    "@atomist/sdm-core": "^0.4.6-20180821204302",
+    "@atomist/sdm-pack-spring": "^0.1.10-20180822094044",
     "@types/dateformat": "^1.0.1",
     "@types/lodash": "^4.14.108",
     "dateformat": "^3.0.3",
     "lodash": "^4.17.10"
   },
   "devDependencies": {
-    "@atomist/sdm-local": "^0.1.9",
+    "@atomist/sdm-local": "^0.1.11-20180822045405",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.7.1",
     "@types/power-assert": "^1.5.0",
