@@ -17,28 +17,51 @@
 import {
     AnyPush,
     anySatisfied,
-    AutofixGoal, GitHubRepoRef,
+    AutofixGoal,
+    BuildGoal,
+    GitHubRepoRef,
     goalContributors,
-    Goals, JustBuildGoal, onAnyPush, PushReactionGoal, ReviewGoal,
+    Goals,
+    JustBuildGoal,
+    onAnyPush,
+    PushReactionGoal,
+    ReviewGoal,
     SoftwareDeliveryMachine,
-    SoftwareDeliveryMachineConfiguration, StagingDeploymentGoal, StagingEndpointGoal, whenPushSatisfies,
+    SoftwareDeliveryMachineConfiguration,
+    StagingDeploymentGoal,
+    StagingEndpointGoal,
+    whenPushSatisfies,
 } from "@atomist/sdm";
 import {
-    createSoftwareDeliveryMachine, DisableDeploy, DisplayDeployEnablement, EnableDeploy,
+    createSoftwareDeliveryMachine,
+    DisableDeploy,
+    DisplayDeployEnablement,
+    EnableDeploy,
     ExplainDeploymentFreezeGoal,
     InMemoryDeploymentStatusManager,
     isDeploymentFrozen,
-    isInLocalMode, ManagedDeploymentTargeter, RepositoryDeletionGoals, StagingUndeploymentGoal,
+    isInLocalMode,
+    ManagedDeploymentTargeter,
+    StagingUndeploymentGoal,
+    summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
 import {
-    configureLocalSpringBootDeploy, configureMavenPerBranchSpringBootDeploy,
-    IsMaven, localExecutableJarDeployer, MavenBuilder,
+    configureLocalSpringBootDeploy,
+    configureMavenPerBranchSpringBootDeploy,
+    IsMaven,
+    localExecutableJarDeployer,
+    MavenBuilder,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
-    SpringProjectCreationParameters, SpringSupport, TransformSeedToCustomProject,
+    SpringProjectCreationParameters,
+    SpringSupport,
+    TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
 import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
 import * as deploy from "@atomist/sdm/api-helper/dsl/deployDsl";
+import { executeBuild } from "@atomist/sdm/api-helper/goal/executeBuild";
+import { executeDeploy } from "@atomist/sdm/api-helper/goal/executeDeploy";
+import { executeUndeploy } from "@atomist/sdm/api-helper/goal/executeUndeploy";
 
 const freezeStore = new InMemoryDeploymentStatusManager();
 
@@ -54,45 +77,6 @@ export function machine(
             configuration,
         });
 
-    configureGoals(sdm);
-    configureGenerators(sdm);
-    configureExtensionPacks(sdm);
-    configureBuilder(sdm);
-
-    if (isInLocalMode()) {
-        configureDeploysForLocalSdm(sdm);
-    } else {
-        configureDeploysForCloudSdm(sdm);
-    }
-
-    return sdm;
-}
-
-export function configureDeploysForCloudSdm(sdm: SoftwareDeliveryMachine) {
-    configureLocalSpringBootDeploy(sdm);
-    sdm.addDeployRules(
-        deploy.when(IsMaven)
-            .deployTo(StagingDeploymentGoal, StagingEndpointGoal, StagingUndeploymentGoal)
-            .using(
-                {
-                    deployer: localExecutableJarDeployer(),
-                    targeter: ManagedDeploymentTargeter,
-                },
-            ),
-    );
-
-    sdm.addDisposalRules(
-        whenPushSatisfies(AnyPush)
-            .itMeans("We can always delete the repo")
-            .setGoals(RepositoryDeletionGoals));
-
-    sdm.addCommand(EnableDeploy)
-        .addCommand(DisableDeploy)
-        .addCommand(DisplayDeployEnablement);
-}
-
-function configureGoals(sdm: SoftwareDeliveryMachine) {
-    // Each contributor contributes goals. The infrastructure assembles them into a goal set.
     sdm.addGoalContributions(goalContributors(
         onAnyPush().setGoals(new Goals("Checks", ReviewGoal, PushReactionGoal, AutofixGoal)),
         whenPushSatisfies(IsDeploymentFrozen)
@@ -100,9 +84,7 @@ function configureGoals(sdm: SoftwareDeliveryMachine) {
         whenPushSatisfies(anySatisfied(IsMaven))
             .setGoals(JustBuildGoal),
     ));
-}
 
-function configureGenerators(sdm: SoftwareDeliveryMachine) {
     sdm
         .addGeneratorCommand<SpringProjectCreationParameters>({
             name: "create-spring",
@@ -115,34 +97,65 @@ function configureGenerators(sdm: SoftwareDeliveryMachine) {
                 SetAtomistTeamInApplicationYml,
                 TransformSeedToCustomProject,
             ],
-        })
-        .addGeneratorCommand<SpringProjectCreationParameters>({
-            name: "create-spring-kotlin",
-            intent: "create spring kotlin",
-            description: "Create a new Kotlin Spring Boot REST service",
-            paramsMaker: SpringProjectCreationParameters,
-            startingPoint: new GitHubRepoRef("johnsonr", "flux-flix-service"),
-            transform: [
-                ReplaceReadmeTitle,
-                SetAtomistTeamInApplicationYml,
-                TransformSeedToCustomProject,
-            ],
         });
-}
 
-function configureExtensionPacks(sdm: SoftwareDeliveryMachine) {
     sdm.addExtensionPacks(
         SpringSupport,
     );
-}
 
-export function configureBuilder(sdm: SoftwareDeliveryMachine) {
-    const mb = new MavenBuilder(sdm);
-    sdm.addBuildRules(
-        build.setDefault(mb));
+    const buildRule = build.setDefault(new MavenBuilder(sdm));
+    sdm.addGoalImplementation(buildRule.name,
+        BuildGoal,
+        executeBuild(sdm.configuration.sdm.projectLoader, buildRule.value),
+        {
+            pushTest: buildRule.pushTest,
+            logInterpreter: buildRule.value.logInterpreter,
+        });
+    sdm.addGoalImplementation(buildRule.name,
+        JustBuildGoal,
+        executeBuild(sdm.configuration.sdm.projectLoader, buildRule.value),
+        {
+            pushTest: buildRule.pushTest,
+            logInterpreter: buildRule.value.logInterpreter,
+        });
+
+    if (isInLocalMode()) {
+        configureMavenPerBranchSpringBootDeploy(sdm);
+    } else {
+        configureLocalSpringBootDeploy(sdm);
+        const deployRule = deploy.when(IsMaven)
+            .deployTo(StagingDeploymentGoal, StagingEndpointGoal, StagingUndeploymentGoal)
+            .using(
+                {
+                    deployer: localExecutableJarDeployer(),
+                    targeter: ManagedDeploymentTargeter,
+                },
+            );
+        sdm.addGoalImplementation(deployRule.name, deployRule.value.deployGoal, executeDeploy(
+            sdm.configuration.sdm.artifactStore,
+            sdm.configuration.sdm.repoRefResolver,
+            deployRule.value.endpointGoal, deployRule.value),
+            {
+                pushTest: deployRule.pushTest,
+                logInterpreter: deployRule.value.deployer.logInterpreter,
+            },
+        );
+        sdm.addKnownSideEffect(
+            deployRule.value.endpointGoal,
+            deployRule.value.deployGoal.definition.displayName,
+            AnyPush);
+        sdm.addGoalImplementation(deployRule.name, deployRule.value.undeployGoal, executeUndeploy(deployRule.value),
+            {
+                pushTest: deployRule.pushTest,
+                logInterpreter: deployRule.value.deployer.logInterpreter,
+            },
+        );
+        sdm.addCommand(EnableDeploy)
+            .addCommand(DisableDeploy)
+            .addCommand(DisplayDeployEnablement);
+    }
+
+    summarizeGoalsInGitHubStatus(sdm);
+
     return sdm;
-}
-
-function configureDeploysForLocalSdm(sdm: SoftwareDeliveryMachine) {
-    configureMavenPerBranchSpringBootDeploy(sdm);
 }
