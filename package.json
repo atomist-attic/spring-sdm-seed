@@ -1,8 +1,12 @@
 {
-  "name": "@atomist/seed-sdm",
+  "name": "@atomist/spring-sdm-seed",
   "version": "0.1.0",
-  "description": "A seed SDM to deliver automation client projects",
-  "author": "Atomist, Inc.",
+  "description": "A seed SDM to deliver Spring and Spring Boot projects",
+  "author": {
+    "name": "Atomist",
+    "email": "support@atomist.com",
+    "url": "https://atomist.com/"
+  },
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -16,7 +20,8 @@
     "atomist",
     "automation",
     "sdm",
-    "seed"
+    "seed",
+    "spring"
   ],
   "main": "./index.js",
   "types": "./index.d.ts",

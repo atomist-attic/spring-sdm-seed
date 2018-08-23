@@ -1,6 +1,6 @@
-# @atomist/seed-sdm
+# @atomist/spring-sdm-seed
 
-[![npm version](https://badge.fury.io/js/%40atomist%2Fseed-sdm.svg)](https://badge.fury.io/js/%40atomist%2Fseed-sdm)
+[![npm version](https://badge.fury.io/js/%40atomist%2Fspring-sdm-seed.svg)](https://badge.fury.io/js/%40atomist%2Fspring-sdm-seed)
 
 An [Atomist][atomist] software delivery machine (SDM) automating the
 creation, building, and delivery of [Spring][spring] and [Spring
@@ -67,7 +67,7 @@ channel in the [Atomist community Slack workspace][slack].
 
 If you find a problem, please create an [issue][].
 
-[issue]: https://github.com/atomist/seed-sdm/issues
+[issue]: https://github.com/atomist/spring-sdm-seed/issues
 
 ## Development
 
