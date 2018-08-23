@@ -28,7 +28,8 @@
     "@types/dateformat": "^1.0.1",
     "@types/lodash": "^4.14.108",
     "dateformat": "^3.0.3",
-    "lodash": "^4.17.10"
+    "lodash": "^4.17.10",
+    "axios": "^0.18.0"
   },
   "devDependencies": {
     "@atomist/sdm-local": "^0.1.11-20180822045405",

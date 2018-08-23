@@ -18,10 +18,13 @@ import {
     AnyPush,
     anySatisfied,
     AutofixGoal,
+    AutofixRegistration,
     BuildGoal,
     GitHubRepoRef,
     goalContributors,
     Goals,
+    hasFile,
+    not,
     onAnyPush,
     PushReactionGoal,
     ReviewGoal,
@@ -56,9 +59,13 @@ import {
     SpringSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
+import {
+    TryToUpgradeSpringBootVersion,
+} from "@atomist/sdm-pack-spring/lib/spring/transform/tryToUpgradeSpringBootVersion";
 import { executeBuild } from "@atomist/sdm/api-helper/goal/executeBuild";
 import { executeDeploy } from "@atomist/sdm/api-helper/goal/executeDeploy";
 import { executeUndeploy } from "@atomist/sdm/api-helper/goal/executeUndeploy";
+import axios from "axios";
 
 const freezeStore = new InMemoryDeploymentStatusManager();
 
@@ -148,7 +155,21 @@ export function machine(
             .addCommand(DisplayDeployEnablement);
     }
 
+    sdm.addCodeTransformCommand(TryToUpgradeSpringBootVersion);
+    sdm.addAutofix(AddLicenseFile);
+
     summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
 }
+
+export const LicenseFilename = "LICENSE";
+
+export const AddLicenseFile: AutofixRegistration = {
+    name: "License Fix",
+    pushTest: not(hasFile(LicenseFilename)),
+    transform: async p => {
+        const license = await axios.get("https://www.apache.org/licenses/LICENSE-2.0.txt");
+        return p.addFile(LicenseFilename, license.data);
+    },
+};
