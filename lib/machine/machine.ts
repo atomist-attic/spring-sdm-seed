@@ -22,7 +22,6 @@ import {
     GitHubRepoRef,
     goalContributors,
     Goals,
-    JustBuildGoal,
     onAnyPush,
     PushReactionGoal,
     ReviewGoal,
@@ -57,8 +56,6 @@ import {
     SpringSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-import * as build from "@atomist/sdm/api-helper/dsl/buildDsl";
-import * as deploy from "@atomist/sdm/api-helper/dsl/deployDsl";
 import { executeBuild } from "@atomist/sdm/api-helper/goal/executeBuild";
 import { executeDeploy } from "@atomist/sdm/api-helper/goal/executeDeploy";
 import { executeUndeploy } from "@atomist/sdm/api-helper/goal/executeUndeploy";
