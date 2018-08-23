@@ -82,7 +82,7 @@ export function machine(
         whenPushSatisfies(IsDeploymentFrozen)
             .setGoals(ExplainDeploymentFreezeGoal),
         whenPushSatisfies(anySatisfied(IsMaven))
-            .setGoals(JustBuildGoal),
+            .setGoals(BuildGoal),
     ));
 
     sdm
@@ -103,51 +103,47 @@ export function machine(
         SpringSupport,
     );
 
-    const buildRule = build.setDefault(new MavenBuilder(sdm));
-    sdm.addGoalImplementation(buildRule.name,
+    const mavenBuilder = new MavenBuilder(sdm);
+    sdm.addGoalImplementation("Maven build",
         BuildGoal,
-        executeBuild(sdm.configuration.sdm.projectLoader, buildRule.value),
+        executeBuild(sdm.configuration.sdm.projectLoader, mavenBuilder),
         {
-            pushTest: buildRule.pushTest,
-            logInterpreter: buildRule.value.logInterpreter,
-        });
-    sdm.addGoalImplementation(buildRule.name,
-        JustBuildGoal,
-        executeBuild(sdm.configuration.sdm.projectLoader, buildRule.value),
-        {
-            pushTest: buildRule.pushTest,
-            logInterpreter: buildRule.value.logInterpreter,
+            pushTest: IsMaven,
+            logInterpreter: mavenBuilder.logInterpreter,
         });
 
     if (isInLocalMode()) {
         configureMavenPerBranchSpringBootDeploy(sdm);
     } else {
         configureLocalSpringBootDeploy(sdm);
-        const deployRule = deploy.when(IsMaven)
-            .deployTo(StagingDeploymentGoal, StagingEndpointGoal, StagingUndeploymentGoal)
-            .using(
-                {
-                    deployer: localExecutableJarDeployer(),
-                    targeter: ManagedDeploymentTargeter,
-                },
-            );
-        sdm.addGoalImplementation(deployRule.name, deployRule.value.deployGoal, executeDeploy(
-            sdm.configuration.sdm.artifactStore,
-            sdm.configuration.sdm.repoRefResolver,
-            deployRule.value.endpointGoal, deployRule.value),
+        const deployToStaging = {
+            deployer: localExecutableJarDeployer(),
+            targeter: ManagedDeploymentTargeter,
+            deployGoal: StagingDeploymentGoal,
+            endpointGoal: StagingEndpointGoal,
+            undeployGoal: StagingUndeploymentGoal,
+        };
+        sdm.addGoalImplementation("Maven deployer",
+            deployToStaging.deployGoal,
+            executeDeploy(
+                sdm.configuration.sdm.artifactStore,
+                sdm.configuration.sdm.repoRefResolver,
+                deployToStaging.endpointGoal, deployToStaging),
             {
-                pushTest: deployRule.pushTest,
-                logInterpreter: deployRule.value.deployer.logInterpreter,
+                pushTest: IsMaven,
+                logInterpreter: deployToStaging.deployer.logInterpreter,
             },
         );
         sdm.addKnownSideEffect(
-            deployRule.value.endpointGoal,
-            deployRule.value.deployGoal.definition.displayName,
+            deployToStaging.endpointGoal,
+            deployToStaging.deployGoal.definition.displayName,
             AnyPush);
-        sdm.addGoalImplementation(deployRule.name, deployRule.value.undeployGoal, executeUndeploy(deployRule.value),
+        sdm.addGoalImplementation("Maven deployer",
+            deployToStaging.undeployGoal,
+            executeUndeploy(deployToStaging),
             {
-                pushTest: deployRule.pushTest,
-                logInterpreter: deployRule.value.deployer.logInterpreter,
+                pushTest: IsMaven,
+                logInterpreter: deployToStaging.deployer.logInterpreter,
             },
         );
         sdm.addCommand(EnableDeploy)
