@@ -15,7 +15,6 @@
  */
 
 import {
-    AnyPush,
     anySatisfied,
     AutofixGoal,
     AutofixRegistration,
@@ -30,28 +29,15 @@ import {
     ReviewGoal,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
-    StagingDeploymentGoal,
-    StagingEndpointGoal,
     whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
-    DisableDeploy,
-    DisplayDeployEnablement,
-    EnableDeploy,
-    ExplainDeploymentFreezeGoal,
-    InMemoryDeploymentStatusManager,
-    isDeploymentFrozen,
-    isInLocalMode,
-    ManagedDeploymentTargeter,
-    StagingUndeploymentGoal,
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
 import {
-    configureLocalSpringBootDeploy,
     configureMavenPerBranchSpringBootDeploy,
     IsMaven,
-    localExecutableJarDeployer,
     MavenBuilder,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
@@ -59,17 +45,8 @@ import {
     SpringSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-import {
-    TryToUpgradeSpringBootVersion,
-} from "@atomist/sdm-pack-spring/lib/spring/transform/tryToUpgradeSpringBootVersion";
 import { executeBuild } from "@atomist/sdm/api-helper/goal/executeBuild";
-import { executeDeploy } from "@atomist/sdm/api-helper/goal/executeDeploy";
-import { executeUndeploy } from "@atomist/sdm/api-helper/goal/executeUndeploy";
 import axios from "axios";
-
-const freezeStore = new InMemoryDeploymentStatusManager();
-
-const IsDeploymentFrozen = isDeploymentFrozen(freezeStore);
 
 export function machine(
     configuration: SoftwareDeliveryMachineConfiguration,
@@ -82,16 +59,14 @@ export function machine(
         });
 
     sdm.addGoalContributions(goalContributors(
-        onAnyPush().setGoals(new Goals("Checks", ReviewGoal, PushReactionGoal, AutofixGoal)),
-        whenPushSatisfies(IsDeploymentFrozen)
-            .setGoals(ExplainDeploymentFreezeGoal),
+        onAnyPush()
+            .setGoals(new Goals("Checks", ReviewGoal, PushReactionGoal, AutofixGoal)),
         whenPushSatisfies(anySatisfied(IsMaven))
             .setGoals(BuildGoal),
     ));
 
-    sdm
-        .addGeneratorCommand<SpringProjectCreationParameters>({
-            name: "create-spring",
+    sdm.addGeneratorCommand<SpringProjectCreationParameters>({
+            name: "CreateSpring",
             intent: "create spring",
             description: "Create a new Java Spring Boot REST service",
             paramsMaker: SpringProjectCreationParameters,
@@ -103,9 +78,7 @@ export function machine(
             ],
         });
 
-    sdm.addExtensionPacks(
-        SpringSupport,
-    );
+
 
     const mavenBuilder = new MavenBuilder(sdm);
     sdm.addGoalImplementation("Maven build",
@@ -116,48 +89,16 @@ export function machine(
             logInterpreter: mavenBuilder.logInterpreter,
         });
 
-    if (isInLocalMode()) {
-        configureMavenPerBranchSpringBootDeploy(sdm);
-    } else {
-        configureLocalSpringBootDeploy(sdm);
-        const deployToStaging = {
-            deployer: localExecutableJarDeployer(),
-            targeter: ManagedDeploymentTargeter,
-            deployGoal: StagingDeploymentGoal,
-            endpointGoal: StagingEndpointGoal,
-            undeployGoal: StagingUndeploymentGoal,
-        };
-        sdm.addGoalImplementation("Maven deployer",
-            deployToStaging.deployGoal,
-            executeDeploy(
-                sdm.configuration.sdm.artifactStore,
-                sdm.configuration.sdm.repoRefResolver,
-                deployToStaging.endpointGoal, deployToStaging),
-            {
-                pushTest: IsMaven,
-                logInterpreter: deployToStaging.deployer.logInterpreter,
-            },
-        );
-        sdm.addKnownSideEffect(
-            deployToStaging.endpointGoal,
-            deployToStaging.deployGoal.definition.displayName,
-            AnyPush);
-        sdm.addGoalImplementation("Maven deployer",
-            deployToStaging.undeployGoal,
-            executeUndeploy(deployToStaging),
-            {
-                pushTest: IsMaven,
-                logInterpreter: deployToStaging.deployer.logInterpreter,
-            },
-        );
-        sdm.addCommand(EnableDeploy)
-            .addCommand(DisableDeploy)
-            .addCommand(DisplayDeployEnablement);
-    }
+    // SpringSupport provides the TryToUpgradeSpringBootVersion code transform and
+    // repository tag support
+    sdm.addExtensionPacks(
+        SpringSupport,
+    );
+    configureMavenPerBranchSpringBootDeploy(sdm);
 
-    sdm.addCodeTransformCommand(TryToUpgradeSpringBootVersion);
     sdm.addAutofix(AddLicenseFile);
 
+    // Manages a GitHub status check based on the current goals
     summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
