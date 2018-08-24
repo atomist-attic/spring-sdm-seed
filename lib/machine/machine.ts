@@ -38,6 +38,7 @@ import {
 import {
     configureMavenPerBranchSpringBootDeploy,
     IsMaven,
+    ListBranchDeploys,
     MavenBuilder,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
@@ -93,6 +94,7 @@ export function machine(
         SpringSupport,
     );
     configureMavenPerBranchSpringBootDeploy(sdm);
+    sdm.addCommand(ListBranchDeploys);
 
     sdm.addAutofix(AddLicenseFile);
 
