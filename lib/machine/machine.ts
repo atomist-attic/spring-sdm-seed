@@ -15,26 +15,102 @@
  */
 
 import {
+    anySatisfied,
+    AutofixGoal,
+    AutofixRegistration,
+    BuildGoal,
+    GitHubRepoRef,
+    goalContributors,
+    Goals,
+    hasFile,
+    not,
+    onAnyPush,
+    PushReactionGoal,
+    ReviewGoal,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
+    whenPushSatisfies,
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
-import { addSpringSupport } from "./springSupport";
+import {
+    configureMavenPerBranchSpringBootDeploy,
+    IsMaven,
+    ListBranchDeploys,
+    MavenBuilder,
+    ReplaceReadmeTitle,
+    SetAtomistTeamInApplicationYml,
+    SpringProjectCreationParameters,
+    SpringSupport,
+    TransformSeedToCustomProject,
+} from "@atomist/sdm-pack-spring";
+import { executeBuild } from "@atomist/sdm/api-helper/goal/executeBuild";
+import axios from "axios";
 
 export function machine(
     configuration: SoftwareDeliveryMachineConfiguration,
 ): SoftwareDeliveryMachine {
 
-    const sdm = createSoftwareDeliveryMachine({
-        name: "Minimal Seed Software Delivery Machine",
-        configuration,
-    });
-    addSpringSupport(sdm);
+    const sdm: SoftwareDeliveryMachine = createSoftwareDeliveryMachine(
+        {
+            name: "Spring software delivery machine",
+            configuration,
+        });
 
+    sdm.addGoalContributions(goalContributors(
+        onAnyPush()
+            .setGoals(new Goals("Checks", ReviewGoal, PushReactionGoal, AutofixGoal)),
+        whenPushSatisfies(anySatisfied(IsMaven))
+            .setGoals(BuildGoal),
+    ));
+
+    sdm.addGeneratorCommand<SpringProjectCreationParameters>({
+            name: "CreateSpring",
+            intent: "create spring",
+            description: "Create a new Java Spring Boot REST service",
+            paramsMaker: SpringProjectCreationParameters,
+            startingPoint: new GitHubRepoRef("spring-team", "spring-rest-seed"),
+            transform: [
+                ReplaceReadmeTitle,
+                SetAtomistTeamInApplicationYml,
+                TransformSeedToCustomProject,
+            ],
+        });
+
+    const mavenBuilder = new MavenBuilder(sdm);
+    sdm.addGoalImplementation("Maven build",
+        BuildGoal,
+        executeBuild(sdm.configuration.sdm.projectLoader, mavenBuilder),
+        {
+            pushTest: IsMaven,
+            logInterpreter: mavenBuilder.logInterpreter,
+        });
+
+    // SpringSupport provides the TryToUpgradeSpringBootVersion code transform and
+    // repository tag support
+    sdm.addExtensionPacks(
+        SpringSupport,
+    );
+    configureMavenPerBranchSpringBootDeploy(sdm);
+    sdm.addCommand(ListBranchDeploys);
+
+    sdm.addAutofix(AddLicenseFile);
+
+    // Manages a GitHub status check based on the current goals
     summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
 }
+
+export const LicenseFilename = "LICENSE";
+
+export const AddLicenseFile: AutofixRegistration = {
+    name: "License Fix",
+    pushTest: not(hasFile(LicenseFilename)),
+    transform: async p => {
+        const license = await axios.get("https://www.apache.org/licenses/LICENSE-2.0.txt");
+        return p.addFile(LicenseFilename, license.data);
+    },
+};
