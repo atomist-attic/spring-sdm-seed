@@ -78,8 +78,6 @@ export function machine(
             ],
         });
 
-
-
     const mavenBuilder = new MavenBuilder(sdm);
     sdm.addGoalImplementation("Maven build",
         BuildGoal,
