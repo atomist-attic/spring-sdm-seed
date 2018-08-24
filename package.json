@@ -29,7 +29,7 @@
     "@atomist/automation-client": "^0.21.7",
     "@atomist/sdm": "^0.4.7",
     "@atomist/sdm-core": "^0.4.9",
-    "@atomist/sdm-pack-spring": "^0.1.12",
+    "@atomist/sdm-pack-spring": "^0.1.14",
     "@types/dateformat": "^1.0.1",
     "@types/lodash": "^4.14.108",
     "dateformat": "^3.0.3",
@@ -37,7 +37,7 @@
     "axios": "^0.18.0"
   },
   "devDependencies": {
-    "@atomist/sdm-local": "^0.1.16",
+    "@atomist/sdm-local": "^0.1.18",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.7.1",
     "@types/power-assert": "^1.5.0",
