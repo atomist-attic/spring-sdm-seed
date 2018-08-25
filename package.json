@@ -1,6 +1,6 @@
 {
   "name": "@atomist/spring-sdm-seed",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A seed SDM to deliver Spring and Spring Boot projects",
   "author": {
     "name": "Atomist",
