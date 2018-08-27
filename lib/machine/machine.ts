@@ -42,6 +42,7 @@ import {
     MavenBuilder,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
+    SpringProjectCreationParameterDefinitions,
     SpringProjectCreationParameters,
     SpringSupport,
     TransformSeedToCustomProject,
@@ -67,17 +68,17 @@ export function machine(
     ));
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
-            name: "CreateSpring",
-            intent: "create spring",
-            description: "Create a new Java Spring Boot REST service",
-            paramsMaker: SpringProjectCreationParameters,
-            startingPoint: new GitHubRepoRef("spring-team", "spring-rest-seed"),
-            transform: [
-                ReplaceReadmeTitle,
-                SetAtomistTeamInApplicationYml,
-                TransformSeedToCustomProject,
-            ],
-        });
+        name: "create-spring",
+        intent: "create spring",
+        description: "Create a new Java Spring Boot REST service",
+        parameters: SpringProjectCreationParameterDefinitions,
+        startingPoint: new GitHubRepoRef("spring-team", "spring-rest-seed"),
+        transform: [
+            ReplaceReadmeTitle,
+            SetAtomistTeamInApplicationYml,
+            TransformSeedToCustomProject,
+        ],
+    });
 
     const mavenBuilder = new MavenBuilder(sdm);
     sdm.addGoalImplementation("Maven build",
