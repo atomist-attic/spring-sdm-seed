@@ -72,7 +72,7 @@ export function machine(
         intent: "create spring",
         description: "Create a new Java Spring Boot REST service",
         parameters: SpringProjectCreationParameterDefinitions,
-        startingPoint: new GitHubRepoRef("spring-team", "spring-rest-seed"),
+        startingPoint: new GitHubRepoRef("atomist-seeds", "spring-rest-seed"),
         transform: [
             ReplaceReadmeTitle,
             SetAtomistTeamInApplicationYml,
