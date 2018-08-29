@@ -69,7 +69,7 @@
     "clean:run": "rimraf *-v8.log profile.txt log",
     "compile": "run-s git:info gql:gen compile:ts",
     "compile:ts": "tsc --project .",
-    "doc": "typedoc --mode modules --ignoreCompilerErrors --exclude \"**/*.d.ts\" --out doc index.ts lib",
+    "doc": "typedoc --mode modules --excludeExternals --ignoreCompilerErrors --exclude \"**/*.d.ts\" --out doc index.ts lib",
     "fmt": "tsfmt --replace",
     "git:info": "atm-git-info",
     "gql:gen": "atm-gql-gen",
