@@ -27,8 +27,8 @@
   "types": "./index.d.ts",
   "dependencies": {
     "@atomist/automation-client": "1.0.0-master.20180902163213",
-    "@atomist/sdm": "1.0.0-master.20180903074915",
-    "@atomist/sdm-core": "1.0.0-master.20180903064036",
+    "@atomist/sdm": "1.0.0-goal-names.20180903133924",
+    "@atomist/sdm-core": "1.0.0-master.20180903134051",
     "@atomist/sdm-pack-spring": "https://r.atomist.com/209082861",
     "@types/dateformat": "^1.0.1",
     "@types/lodash": "^4.14.108",
