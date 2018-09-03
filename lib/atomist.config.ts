@@ -15,13 +15,13 @@
  */
 
 import { Configuration } from "@atomist/automation-client";
+import { ConfigurationValues } from "@atomist/sdm";
 import {
-    ConfigureOptions,
     configureSdm,
 } from "@atomist/sdm-core";
 import { machine } from "./machine/machine";
 
-const machineOptions: ConfigureOptions = {
+const machineOptions: ConfigurationValues = {
     requiredConfigurationValues: [
     ],
 };
