@@ -16,17 +16,16 @@
 
 import {
     anySatisfied,
-    AutofixGoal,
+    AutoCodeInspection,
+    Autofix,
     AutofixRegistration,
-    BuildGoal,
-    GitHubRepoRef,
+    Build,
     goalContributors,
-    Goals,
+    goals,
     hasFile,
     not,
     onAnyPush,
-    PushReactionGoal,
-    ReviewGoal,
+    PushImpact,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
     whenPushSatisfies,
@@ -36,18 +35,13 @@ import {
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
 import {
+    addSpringInitializrGenerator,
     configureMavenPerBranchSpringBootDeploy,
     IsMaven,
     ListBranchDeploys,
     MavenBuilder,
-    ReplaceReadmeTitle,
-    SetAtomistTeamInApplicationYml,
-    SpringProjectCreationParameterDefinitions,
-    SpringProjectCreationParameters,
     SpringSupport,
-    TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-import { executeBuild } from "@atomist/sdm/api-helper/goal/executeBuild";
 import axios from "axios";
 
 export function machine(
@@ -60,44 +54,30 @@ export function machine(
             configuration,
         });
 
+    const AutofixGoal = new Autofix().with(AddLicenseFile);
+
+    const BaseGoals = goals("checks")
+        .plan(new AutoCodeInspection())
+        .plan(new PushImpact())
+        .plan(AutofixGoal);
+    const BuildGoals = goals("build")
+        .plan(new Build().with({name: "Maven", builder: new MavenBuilder(sdm)}))
+        .after(AutofixGoal);
+
     sdm.addGoalContributions(goalContributors(
         onAnyPush()
-            .setGoals(new Goals("Checks", ReviewGoal, PushReactionGoal, AutofixGoal)),
+            .setGoals(BaseGoals),
         whenPushSatisfies(anySatisfied(IsMaven))
-            .setGoals(BuildGoal),
+            .setGoals(BuildGoals),
     ));
 
-    sdm.addGeneratorCommand<SpringProjectCreationParameters>({
-        name: "create-spring",
-        intent: "create spring",
-        description: "Create a new Java Spring Boot REST service",
-        parameters: SpringProjectCreationParameterDefinitions,
-        startingPoint: new GitHubRepoRef("atomist-seeds", "spring-rest-seed"),
-        transform: [
-            ReplaceReadmeTitle,
-            SetAtomistTeamInApplicationYml,
-            TransformSeedToCustomProject,
-        ],
-    });
-
-    const mavenBuilder = new MavenBuilder(sdm);
-    sdm.addGoalImplementation("Maven build",
-        BuildGoal,
-        executeBuild(sdm.configuration.sdm.projectLoader, mavenBuilder),
-        {
-            pushTest: IsMaven,
-            logInterpreter: mavenBuilder.logInterpreter,
-        });
-
-    // SpringSupport provides the TryToUpgradeSpringBootVersion code transform and
-    // repository tag support
     sdm.addExtensionPacks(
         SpringSupport,
     );
+
+    addSpringInitializrGenerator(sdm);
     configureMavenPerBranchSpringBootDeploy(sdm);
     sdm.addCommand(ListBranchDeploys);
-
-    sdm.addAutofix(AddLicenseFile);
 
     // Manages a GitHub status check based on the current goals
     summarizeGoalsInGitHubStatus(sdm);
