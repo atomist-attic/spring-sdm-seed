@@ -27,9 +27,9 @@
   "types": "./index.d.ts",
   "dependencies": {
     "@atomist/automation-client": "1.0.0-master.20180903210158",
-    "@atomist/sdm": "1.0.0-master.20180904005606",
-    "@atomist/sdm-core": "1.0.0-master.20180904003112",
-    "@atomist/sdm-pack-spring": "1.0.0-update-sdm.20180904075055",
+    "@atomist/sdm": "1.0.0-master.20180904101721",
+    "@atomist/sdm-core": "1.0.0-master.20180904115837",
+    "@atomist/sdm-pack-spring": "1.0.0-master.20180904115008",
     "@types/dateformat": "^1.0.1",
     "@types/lodash": "^4.14.108",
     "dateformat": "^3.0.3",
@@ -37,7 +37,7 @@
     "axios": "^0.18.0"
   },
   "devDependencies": {
-    "@atomist/sdm-local": "1.0.0-master.20180903043456",
+    "@atomist/sdm-local": "1.0.0-master.20180904104648",
     "@types/mocha": "^5.2.5",
     "@types/node": "^10.7.1",
     "@types/power-assert": "^1.5.0",

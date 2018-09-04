@@ -55,6 +55,7 @@ export function machine(
         });
 
     const AutofixGoal = new Autofix().with(AddLicenseFile);
+
     const BaseGoals = goals("checks")
         .plan(new AutoCodeInspection())
         .plan(new PushImpact())
@@ -62,6 +63,7 @@ export function machine(
     const BuildGoals = goals("build")
         .plan(new Build().with({name: "Maven", builder: new MavenBuilder(sdm)}))
         .after(AutofixGoal);
+
     sdm.addGoalContributions(goalContributors(
         onAnyPush()
             .setGoals(BaseGoals),
@@ -72,6 +74,7 @@ export function machine(
     sdm.addExtensionPacks(
         SpringSupport,
     );
+
     addSpringInitializrGenerator(sdm);
     configureMavenPerBranchSpringBootDeploy(sdm);
     sdm.addCommand(ListBranchDeploys);
