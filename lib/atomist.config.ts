@@ -22,8 +22,7 @@ import {
 import { machine } from "./machine/machine";
 
 const machineOptions: ConfigureOptions = {
-    requiredConfigurationValues: [
-    ],
+    requiredConfigurationValues: [],
 };
 
 export const configuration: Configuration = {

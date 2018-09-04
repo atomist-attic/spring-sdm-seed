@@ -60,15 +60,14 @@ export function machine(
         .plan(new AutoCodeInspection())
         .plan(new PushImpact())
         .plan(AutofixGoal);
+
     const BuildGoals = goals("build")
-        .plan(new Build().with({name: "Maven", builder: new MavenBuilder(sdm)}))
+        .plan(new Build().with({ name: "Maven", builder: new MavenBuilder(sdm) }))
         .after(AutofixGoal);
 
     sdm.addGoalContributions(goalContributors(
-        onAnyPush()
-            .setGoals(BaseGoals),
-        whenPushSatisfies(anySatisfied(IsMaven))
-            .setGoals(BuildGoals),
+        onAnyPush().setGoals(BaseGoals),
+        whenPushSatisfies(anySatisfied(IsMaven)).setGoals(BuildGoals),
     ));
 
     sdm.addExtensionPacks(
@@ -77,6 +76,7 @@ export function machine(
 
     addSpringInitializrGenerator(sdm);
     configureMavenPerBranchSpringBootDeploy(sdm);
+
     sdm.addCommand(ListBranchDeploys);
 
     // Manages a GitHub status check based on the current goals
