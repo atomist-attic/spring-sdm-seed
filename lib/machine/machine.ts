@@ -21,7 +21,7 @@ import {
     AutofixRegistration,
     Build,
     goalContributors,
-    Goals,
+    goals,
     hasFile,
     not,
     onAnyPush,
@@ -54,16 +54,19 @@ export function machine(
             configuration,
         });
 
-    const BaseGoals = new Goals("checks",
-            new AutoCodeInspection("codeInspections"),
-            new PushImpact("pushImpact"),
-            new Autofix("autofix").with(AddLicenseFile));
-
+    const AutofixGoal = new Autofix().with(AddLicenseFile);
+    const BaseGoals = goals("checks")
+        .plan(new AutoCodeInspection())
+        .plan(new PushImpact())
+        .plan(AutofixGoal);
+    const BuildGoals = goals("build")
+        .plan(new Build().with({name: "Maven", builder: new MavenBuilder(sdm)}))
+        .after(AutofixGoal);
     sdm.addGoalContributions(goalContributors(
         onAnyPush()
             .setGoals(BaseGoals),
         whenPushSatisfies(anySatisfied(IsMaven))
-            .setGoals(new Build("mavenBuild").with({name: "Maven", builder: new MavenBuilder(sdm)})),
+            .setGoals(BuildGoals),
     ));
 
     sdm.addExtensionPacks(
