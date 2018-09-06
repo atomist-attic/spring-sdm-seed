@@ -1,3 +1,7 @@
+# DEPRECATED
+
+See [atomist-seeds/spring-sdm](https://github.com/atomist-seeds/spring-sdm).
+
 # @atomist/spring-sdm-seed
 
 [![atomist sdm goals](http://badge.atomist.com/T29E48P34/atomist/spring-sdm-seed/94b9a596-f882-4d42-9cc4-fcf70bd5b3db)](https://app.atomist.com/workspace/T29E48P34)
