@@ -20,6 +20,7 @@ import {
     Autofix,
     AutofixRegistration,
     Build,
+    GitHubRepoRef,
     goalContributors,
     goals,
     hasFile,
@@ -35,12 +36,16 @@ import {
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
 import {
-    addSpringInitializrGenerator,
     configureMavenPerBranchSpringBootDeploy,
     IsMaven,
     ListBranchDeploys,
     MavenBuilder,
+    ReplaceReadmeTitle,
+    SetAtomistTeamInApplicationYml,
+    SpringProjectCreationParameterDefinitions,
+    SpringProjectCreationParameters,
     SpringSupport,
+    TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
 import axios from "axios";
 
@@ -74,7 +79,19 @@ export function machine(
         SpringSupport,
     );
 
-    addSpringInitializrGenerator(sdm);
+    sdm.addGeneratorCommand<SpringProjectCreationParameters>({
+        name: "create-spring",
+        intent: "create spring",
+        description: "Create a new Java Spring Boot REST service",
+        parameters: SpringProjectCreationParameterDefinitions,
+        startingPoint: GitHubRepoRef.from({ owner: "atomist-seeds", repo: "spring-rest-seed", branch: "master" }),
+        transform: [
+            ReplaceReadmeTitle,
+            SetAtomistTeamInApplicationYml,
+            TransformSeedToCustomProject,
+        ],
+    });
+
     configureMavenPerBranchSpringBootDeploy(sdm);
 
     sdm.addCommand(ListBranchDeploys);
