@@ -39,7 +39,7 @@
     "@atomist/sdm": "1.0.0-master.20180910070004",
     "@atomist/sdm-core": "1.0.0-master.20180909211148",
     "@atomist/sdm-pack-docker": "1.0.0-master.20180904173022",
-    "@atomist/sdm-pack-k8": "^1.0.0-typed-goal.20180910102426",
+    "@atomist/sdm-pack-k8": "1.0.0-typed-goal.20180910193652",
     "@atomist/sdm-pack-spring": "1.0.0-maven-helpers.20180910132405",
 >>>>>>> Polish
     "@types/dateformat": "^1.0.1",
