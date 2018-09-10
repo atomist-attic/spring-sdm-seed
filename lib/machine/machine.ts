@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { SuccessIsReturn0ErrorFinder } from "@atomist/automation-client/util/spawned";
 import {
     AutoCodeInspection,
     Autofix,
@@ -23,7 +22,6 @@ import {
     goalContributors,
     goals,
     onAnyPush,
-    PrepareForGoalExecution,
     PushImpact,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
@@ -51,7 +49,7 @@ import {
     SpringSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
+import { MavenPackage } from "../support/maven";
 import {
     AddDockerfileAutofix,
     AddDockerfileTransform,
@@ -126,17 +124,3 @@ export function machine(
 
     return sdm;
 }
-
-const MavenPackage: PrepareForGoalExecution = async (p, r) => {
-    const result = await spawnAndWatch({
-            command: "mvn",
-            args: ["package", "-DskipTests=true", `-Dartifact.name=${r.id.repo}`],
-        }, {
-            cwd: p.baseDir,
-        },
-        r.progressLog,
-        {
-            errorFinder: SuccessIsReturn0ErrorFinder,
-        });
-    return result;
-};
