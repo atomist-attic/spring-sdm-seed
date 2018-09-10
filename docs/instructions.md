@@ -14,7 +14,7 @@ After installation run the following command to create a new local cluster:
 $ minikube start
 ```
 
-#### Set up Docker environment
+#### Configure up Docker environment in terminal session
 
 This has to be executed in the terminal you are going to run the SDM in.
 
