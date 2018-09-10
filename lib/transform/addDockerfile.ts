@@ -19,11 +19,13 @@ import {
     AutofixRegistration,
     CodeTransform,
 } from "@atomist/sdm";
+import * as _ from "lodash";
 
-export const AddDockerfileTransform: CodeTransform<NoParameters> = async p => {
+export const AddDockerfileTransform: CodeTransform<NoParameters> = async (p, inv) => {
+    const name = _.get(inv, "parameters.target.repo") || p.name;
     if (await p.hasFile("pom.xml")) {
-        await p.addFile("Dockerfile", dockerFile(p.name));
-        await p.addFile(".dockerignore", dockerIgnore(p.name));
+        await p.addFile("Dockerfile", dockerFile(name));
+        await p.addFile(".dockerignore", dockerIgnore(name));
     }
     return p;
 };
@@ -34,6 +36,7 @@ export const AddDockerfileAutofix: AutofixRegistration<NoParameters> = {
 };
 
 function dockerFile(name: string): string {
+    // tslint:disable:max-line-length
     return `FROM openjdk:8
 
 ENV DUMB_INIT_VERSION=1.2.1
@@ -61,5 +64,5 @@ COPY target/${name}.jar ${name}.jar
 function dockerIgnore(name: string): string {
     return `*
 !target/${name}.jar
-`
+`;
 }
