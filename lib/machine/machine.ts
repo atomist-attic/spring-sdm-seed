@@ -35,7 +35,6 @@ import {
 } from "@atomist/sdm-core";
 import {
     DockerBuild,
-    DockerOptions,
     HasDockerfile,
 } from "@atomist/sdm-pack-docker";
 import { kubernetesSupport } from "@atomist/sdm-pack-k8/dist";
@@ -57,6 +56,7 @@ import {
     AddDockerfileAutofix,
     AddDockerfileTransform,
 } from "../transform/addDockerfile";
+import { AddFinalNameToPom } from "../transform/addFinalName";
 
 export function machine(
     configuration: SoftwareDeliveryMachineConfiguration,
@@ -83,10 +83,7 @@ export function machine(
     const dockerBuild = new DockerBuild().with({
         name: "mvn-docker",
         preparations: [MavenVersionPreparation, MavenPackage],
-        options: {
-            ...sdm.configuration.sdm.docker.hub as DockerOptions,
-            push: true
-        },
+        options: { push: false },
     });
 
     const kubernetesDeploy = new KubernetesDeploy({ environment: "testing" });
@@ -109,7 +106,7 @@ export function machine(
 
     sdm.addExtensionPacks(
         SpringSupport,
-        kubernetesSupport({ context: "gke_kubernetes-sdm-demo_us-east1-c_k8-int-demo" }),
+        kubernetesSupport({ context: "minikube" }),
     );
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
@@ -123,6 +120,7 @@ export function machine(
             SetAtomistTeamInApplicationYml,
             TransformSeedToCustomProject,
             AddDockerfileTransform,
+            AddFinalNameToPom,
         ],
     });
 
