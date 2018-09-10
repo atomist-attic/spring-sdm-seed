@@ -25,7 +25,7 @@ export const AddFinalNameToPom: CodeTransform<NoParameters> = async p => {
 
         pomContent = pomContent.replace(/<build>/i, `<build>
 \t\t<finalName>\${artifact.name}</finalName>`);
-
+        // tslint:disable-next-line:max-line-length
         pomContent = pomContent.replace(/<\/properties>/i, `\t<artifact.name>\${project.artifactId}-\${project.version}</artifact.name>
 \t</properties>`);
 
