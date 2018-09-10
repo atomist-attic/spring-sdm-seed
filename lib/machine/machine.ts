@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
+import { SuccessIsReturn0ErrorFinder } from "@atomist/automation-client/util/spawned";
 import {
-    anySatisfied,
     AutoCodeInspection,
     Autofix,
-    AutofixRegistration,
     Build,
     GitHubRepoRef,
     goalContributors,
     goals,
-    hasFile,
-    not,
     onAnyPush,
+    PrepareForGoalExecution,
     PushImpact,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
@@ -33,13 +31,20 @@ import {
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
-    summarizeGoalsInGitHubStatus,
+    Version,
 } from "@atomist/sdm-core";
 import {
-    configureMavenPerBranchSpringBootDeploy,
+    DockerBuild,
+    DockerOptions,
+    HasDockerfile,
+} from "@atomist/sdm-pack-docker";
+import { kubernetesSupport } from "@atomist/sdm-pack-k8/dist";
+import { KubernetesDeploy } from "@atomist/sdm-pack-k8/dist/support/KubernetesDeploy";
+import {
     IsMaven,
-    ListBranchDeploys,
     MavenBuilder,
+    MavenProjectVersioner,
+    MavenVersionPreparation,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
@@ -47,7 +52,11 @@ import {
     SpringSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-import axios from "axios";
+import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
+import {
+    AddDockerfileAutofix,
+    AddDockerfileTransform,
+} from "../transform/addDockerfile";
 
 export function machine(
     configuration: SoftwareDeliveryMachineConfiguration,
@@ -59,24 +68,48 @@ export function machine(
             configuration,
         });
 
-    const AutofixGoal = new Autofix().with(AddLicenseFile);
+    const autofix = new Autofix().with(AddDockerfileAutofix);
+
+    const version = new Version().with({
+        name: "mvn-versioner",
+        versioner: MavenProjectVersioner,
+    });
+
+    const build = new Build().with({
+        name: "mvn",
+        builder: new MavenBuilder(sdm),
+    });
+
+    const dockerBuild = new DockerBuild().with({
+        name: "mvn-docker",
+        preparations: [MavenVersionPreparation, MavenPackage],
+        options: {
+            ...sdm.configuration.sdm.docker.hub as DockerOptions,
+            push: true
+        },
+    });
+
+    const kubernetesDeploy = new KubernetesDeploy({ environment: "testing" });
 
     const BaseGoals = goals("checks")
-        .plan(new AutoCodeInspection())
-        .plan(new PushImpact())
-        .plan(AutofixGoal);
+        .plan(version, autofix, new AutoCodeInspection(), new PushImpact());
 
     const BuildGoals = goals("build")
-        .plan(new Build().with({ name: "Maven", builder: new MavenBuilder(sdm) }))
-        .after(AutofixGoal);
+        .plan(build).after(autofix, version);
+
+    const DeployGoals = goals("deploy")
+        .plan(dockerBuild).after(build)
+        .plan(kubernetesDeploy).after(dockerBuild);
 
     sdm.addGoalContributions(goalContributors(
         onAnyPush().setGoals(BaseGoals),
-        whenPushSatisfies(anySatisfied(IsMaven)).setGoals(BuildGoals),
+        whenPushSatisfies(IsMaven).setGoals(BuildGoals),
+        whenPushSatisfies(HasDockerfile).setGoals(DeployGoals),
     ));
 
     sdm.addExtensionPacks(
         SpringSupport,
+        kubernetesSupport({ context: "gke_kubernetes-sdm-demo_us-east1-c_k8-int-demo" }),
     );
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
@@ -89,26 +122,23 @@ export function machine(
             ReplaceReadmeTitle,
             SetAtomistTeamInApplicationYml,
             TransformSeedToCustomProject,
+            AddDockerfileTransform,
         ],
     });
-
-    configureMavenPerBranchSpringBootDeploy(sdm);
-
-    sdm.addCommand(ListBranchDeploys);
-
-    // Manages a GitHub status check based on the current goals
-    summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
 }
 
-export const LicenseFilename = "LICENSE";
-
-export const AddLicenseFile: AutofixRegistration = {
-    name: "License Fix",
-    pushTest: not(hasFile(LicenseFilename)),
-    transform: async p => {
-        const license = await axios.get("https://www.apache.org/licenses/LICENSE-2.0.txt");
-        return p.addFile(LicenseFilename, license.data);
-    },
+const MavenPackage: PrepareForGoalExecution = async (p, r) => {
+    const result = await spawnAndWatch({
+            command: "mvn",
+            args: ["package", "-DskipTests=true", `-Dartifact.name=${r.id.repo}`],
+        }, {
+            cwd: p.baseDir,
+        },
+        r.progressLog,
+        {
+            errorFinder: SuccessIsReturn0ErrorFinder,
+        });
+    return result;
 };
