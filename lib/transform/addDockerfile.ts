@@ -37,13 +37,10 @@ export const AddDockerfileAutofix: AutofixRegistration<NoParameters> = {
 
 function dockerFile(name: string): string {
     // tslint:disable:max-line-length
-    return `FROM openjdk:8
+    return `FROM openjdk:8-alpine
 
-ENV DUMB_INIT_VERSION=1.2.1
-
-RUN curl -s -L -O https://github.com/Yelp/dumb-init/releases/download/v$DUMB_INIT_VERSION/dumb-init_\${DUMB_INIT_VERSION}_amd64.deb \\
-    && dpkg -i dumb-init_\${DUMB_INIT_VERSION}_amd64.deb \\
-    && rm -f dumb-init_\${DUMB_INIT_VERSION}_amd64.deb
+RUN wget -O /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.2/dumb-init_1.2.2_amd64 && \\
+chmod 755 /usr/local/bin/dumb-init
 
 MAINTAINER Atomist <docker@atomist.com>
 
@@ -55,7 +52,7 @@ EXPOSE 8080
 
 CMD ["-jar", "${name}.jar"]
 
-ENTRYPOINT ["dumb-init", "java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Xmx256m", "-Djava.security.egd=file:/dev/urandom"]
+ENTRYPOINT ["/usr/local/bin/dumb-init", "java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Xmx256m", "-Djava.security.egd=file:/dev/urandom"]
 
 COPY target/${name}.jar ${name}.jar
 `;
