@@ -67,15 +67,10 @@ $ kubectl get pods --all-namespace
 
 #### Hit the app endpoint
 
-To enable visiting the app endpoint on your minikube, you have to map `sdm.info`
-to your minikube ip. 
+The app endpoint will be available at: `http://<owner>.<repo>.<minikube ip>.nip.io`.
 
-For that, edit /etc/hosts and add:
+Where `minikube ip` is the IP outputted by running:
 
 ```
-[minikube ip] sdm.info
+$ minikube ip
 ```
-
-Where [minikube ip] is the output of running `minikube ip` on your terminal.
-
-Now the `http://sdm.info/<owner>/<repo>` URLs will work.
