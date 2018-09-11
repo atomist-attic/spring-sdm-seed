@@ -40,6 +40,7 @@ import { KubernetesDeploy } from "@atomist/sdm-pack-k8/dist/support/KubernetesDe
 import {
     IsMaven,
     MavenBuilder,
+    MavenProgressReporter,
     MavenProjectVersioner,
     MavenVersionPreparation,
     ReplaceReadmeTitle,
@@ -67,19 +68,14 @@ export function machine(
         });
 
     const autofix = new Autofix().with(AddDockerfileAutofix);
-
-    const version = new Version().with({
-        name: "mvn-versioner",
-        versioner: MavenProjectVersioner,
-    });
+    const version = new Version().withVersioner(MavenProjectVersioner);
 
     const build = new Build().with({
-        name: "mvn",
         builder: new MavenBuilder(sdm),
+        progressReporter: MavenProgressReporter,
     });
 
     const dockerBuild = new DockerBuild().with({
-        name: "mvn-docker",
         preparations: [MavenVersionPreparation, MavenPackage],
         options: { push: false },
     });
@@ -104,7 +100,7 @@ export function machine(
 
     sdm.addExtensionPacks(
         SpringSupport,
-        kubernetesSupport({ context: "minikube" }),
+        kubernetesSupport(),
     );
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
