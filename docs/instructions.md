@@ -54,7 +54,7 @@ $ atomist create spring
 #### Verify deployment
 
 ```
-$ kubectl get pods --all-namespace
+$ kubectl get pods --all-namespaces
 ```
 
 #### Hit the app endpoint
