@@ -59,7 +59,7 @@ $ kubectl get pods --all-namespaces
 
 #### Hit the app endpoint
 
-The app endpoint will be available at: `http://<owner>.<repo>.<minikube ip>.nip.io`.
+The app endpoint will be available at: `http://<repo>.<ownner>.testing.<minikube ip>.nip.io`.
 
 Where `minikube ip` is the IP outputted by running:
 
