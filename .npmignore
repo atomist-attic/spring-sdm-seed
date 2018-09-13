@@ -4,13 +4,15 @@
 *~
 .#*
 .dockerignore
-.gitignore
+.git*
 .npmrc*
 .travis.yml
 .atomist/
+.nyc_output/
 /build/
 /doc/
 /config/
+/coverage/
 /log/
 /scripts/
 /src/
