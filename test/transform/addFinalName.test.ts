@@ -80,7 +80,7 @@ describe("addFinalName", () => {
 
         it("should add the finalName instructions to the pom", async () => {
             const p = InMemoryProject.of({ path: "pom.xml", content: Pom });
-            const ep = await AddFinalNameToPom(p, null);
+            const ep = await AddFinalNameToPom(p, undefined);
             assert(!!ep);
         });
 
