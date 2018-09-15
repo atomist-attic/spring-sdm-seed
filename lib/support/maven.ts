@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { SuccessIsReturn0ErrorFinder } from "@atomist/automation-client/util/spawned";
+import {
+    spawnAndWatch,
+    SuccessIsReturn0ErrorFinder,
+} from "@atomist/automation-client";
 import { PrepareForGoalExecution } from "@atomist/sdm";
-import { spawnAndWatch } from "@atomist/sdm/api-helper/misc/spawned";
 
 export const MavenPackage: PrepareForGoalExecution = async (p, r) => {
     const result = await spawnAndWatch({

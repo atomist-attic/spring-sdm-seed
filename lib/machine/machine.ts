@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-<<<<<<< HEAD
-import { SuccessIsReturn0ErrorFinder } from "@atomist/automation-client";
-=======
->>>>>>> Extract maven helper
 import {
     AutoCodeInspection,
     Autofix,
@@ -29,7 +25,6 @@ import {
     PushImpact,
     SoftwareDeliveryMachine,
     SoftwareDeliveryMachineConfiguration,
-    spawnAndWatch,
     whenPushSatisfies,
 } from "@atomist/sdm";
 import {
@@ -57,10 +52,7 @@ import {
     SpringSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-<<<<<<< HEAD
-=======
 import { MavenPackage } from "../support/maven";
->>>>>>> Extract maven helper
 import {
     AddDockerfileAutofix,
     AddDockerfileTransform,

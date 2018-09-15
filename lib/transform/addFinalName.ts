@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { NoParameters } from "@atomist/automation-client/SmartParameters";
+import { NoParameters } from "@atomist/automation-client";
 import { CodeTransform } from "@atomist/sdm";
 
 export const AddFinalNameToPom: CodeTransform<NoParameters> = async p => {
