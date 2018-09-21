@@ -36,10 +36,12 @@ import {
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
 import {
-    configureMavenPerBranchSpringBootDeploy,
+    HasSpringBootApplicationClass,
+    HasSpringBootPom,
     IsMaven,
     ListBranchDeploys,
     MavenBuilder,
+    MavenPerBranchDeployment,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
@@ -74,6 +76,10 @@ export function machine(
         onAnyPush().setGoals(BaseGoals),
         whenPushSatisfies(anySatisfied(IsMaven)).setGoals(BuildGoals),
     ));
+    sdm.addGoalContributions(goalContributors(
+        whenPushSatisfies(HasSpringBootPom, HasSpringBootApplicationClass, IsMaven)
+            .setGoals(new MavenPerBranchDeployment()),
+    ));
 
     sdm.addExtensionPacks(
         SpringSupport,
@@ -91,8 +97,6 @@ export function machine(
             TransformSeedToCustomProject,
         ],
     });
-
-    configureMavenPerBranchSpringBootDeploy(sdm);
 
     sdm.addCommand(ListBranchDeploys);
 
