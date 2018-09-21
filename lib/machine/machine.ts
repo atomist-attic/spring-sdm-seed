@@ -61,24 +61,24 @@ export function machine(
             configuration,
         });
 
-    const AutofixGoal = new Autofix().with(AddLicenseFile);
+    const autofixGoal = new Autofix().with(AddLicenseFile);
 
-    const BaseGoals = goals("checks")
+    const checkGoals = goals("checks")
         .plan(new AutoCodeInspection())
         .plan(new PushImpact())
-        .plan(AutofixGoal);
+        .plan(autofixGoal);
 
-    const BuildGoals = goals("build")
+    const buildGoals = goals("build")
         .plan(new Build().with({ name: "Maven", builder: new MavenBuilder(sdm) }))
-        .after(AutofixGoal);
+        .after(autofixGoal);
+
+    const deployGoals = goals("deploy")
+        .plan(new MavenPerBranchDeployment()).after(...buildGoals.goals);
 
     sdm.addGoalContributions(goalContributors(
-        onAnyPush().setGoals(BaseGoals),
-        whenPushSatisfies(anySatisfied(IsMaven)).setGoals(BuildGoals),
-    ));
-    sdm.addGoalContributions(goalContributors(
-        whenPushSatisfies(HasSpringBootPom, HasSpringBootApplicationClass, IsMaven)
-            .setGoals(new MavenPerBranchDeployment()),
+        onAnyPush().setGoals(checkGoals),
+        whenPushSatisfies(anySatisfied(IsMaven)).setGoals(buildGoals),
+        whenPushSatisfies(HasSpringBootPom, HasSpringBootApplicationClass, IsMaven).setGoals(deployGoals),
     ));
 
     sdm.addExtensionPacks(
