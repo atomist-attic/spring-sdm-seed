@@ -15,7 +15,6 @@
  */
 
 import {
-    anySatisfied,
     AutoCodeInspection,
     Autofix,
     AutofixRegistration,
@@ -77,7 +76,7 @@ export function machine(
 
     sdm.addGoalContributions(goalContributors(
         onAnyPush().setGoals(checkGoals),
-        whenPushSatisfies(anySatisfied(IsMaven)).setGoals(buildGoals),
+        whenPushSatisfies(IsMaven).setGoals(buildGoals),
         whenPushSatisfies(HasSpringBootPom, HasSpringBootApplicationClass, IsMaven).setGoals(deployGoals),
     ));
 
