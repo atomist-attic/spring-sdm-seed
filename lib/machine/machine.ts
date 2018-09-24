@@ -46,7 +46,7 @@ import {
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
     SpringProjectCreationParameters,
-    SpringSupport,
+    springSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
 import axios from "axios";
@@ -62,9 +62,10 @@ export function machine(
         });
 
     const autofixGoal = new Autofix().with(AddLicenseFile);
+    const inspectGoal = new AutoCodeInspection();
 
     const checkGoals = goals("checks")
-        .plan(new AutoCodeInspection())
+        .plan(inspectGoal)
         .plan(new PushImpact())
         .plan(autofixGoal);
 
@@ -82,7 +83,12 @@ export function machine(
     ));
 
     sdm.addExtensionPacks(
-        SpringSupport,
+        springSupport({
+            inspectGoal,
+            autofixGoal,
+            review: {},
+            autofix: {},
+        }),
         codeMetrics(),
     );
 
