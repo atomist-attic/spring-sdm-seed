@@ -36,7 +36,7 @@ Apache License 2.0 - [http://www.apache.org/licenses/LICENSE-2.0](http://www.apa
 |------|---------|-----------|------------|
 |`@atomist/sdm-core`|`1.0.0-master.20180920202624`|Atomist|[https://github.com/atomist/sdm-core](https://github.com/atomist/sdm-core)|
 |`@atomist/sdm-pack-sloc`|`1.0.0-master.20180924171241`|Atomist|[https://github.com/atomist/sdm-pack-sloc](https://github.com/atomist/sdm-pack-sloc)|
-|`@atomist/sdm-pack-spring`|`1.0.0-master.20180920232659`|Atomist|[https://github.com/atomist/sdm-pack-spring](https://github.com/atomist/sdm-pack-spring)|
+|`@atomist/sdm-pack-spring`|`1.0.0-make-configurable.20180924181850`|Atomist|[https://github.com/atomist/sdm-pack-spring](https://github.com/atomist/sdm-pack-spring)|
 |`@atomist/sdm`|`1.0.0-master.20180920152437`|Atomist|[https://github.com/atomist/sdm](https://github.com/atomist/sdm)|
 |`@atomist/slack-messages`|`1.0.0`|Atomist|[https://github.com/atomist/slack-messages](https://github.com/atomist/slack-messages)|
 |`JSONStream`|`1.3.4`|Dominic Tarr|[https://github.com/dominictarr/JSONStream](https://github.com/dominictarr/JSONStream)|
@@ -939,7 +939,7 @@ MIT License - [http://www.opensource.org/licenses/MIT](http://www.opensource.org
 |`supports-color`|`5.5.0`|Sindre Sorhus|[https://github.com/chalk/supports-color](https://github.com/chalk/supports-color)|
 |`swap-case`|`1.1.2`|Blake Embrey|[https://github.com/blakeembrey/swap-case](https://github.com/blakeembrey/swap-case)|
 |`symbol-observable`|`1.2.0`|Ben Lesh|[https://github.com/blesh/symbol-observable](https://github.com/blesh/symbol-observable)|
-|`tar-stream`|`1.6.1`|Mathias Buus|[https://github.com/mafintosh/tar-stream](https://github.com/mafintosh/tar-stream)|
+|`tar-stream`|`1.6.2`|Mathias Buus|[https://github.com/mafintosh/tar-stream](https://github.com/mafintosh/tar-stream)|
 |`temp-dir`|`1.0.0`|Sindre Sorhus|[https://github.com/sindresorhus/temp-dir](https://github.com/sindresorhus/temp-dir)|
 |`tempfile`|`2.0.0`|Sindre Sorhus|[https://github.com/sindresorhus/tempfile](https://github.com/sindresorhus/tempfile)|
 |`term-size`|`1.2.0`|Sindre Sorhus|[https://github.com/sindresorhus/term-size](https://github.com/sindresorhus/term-size)|
