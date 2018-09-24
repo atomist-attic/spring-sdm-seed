@@ -34,6 +34,7 @@ import {
     createSoftwareDeliveryMachine,
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
+import { codeMetrics } from "@atomist/sdm-pack-sloc";
 import {
     HasSpringBootApplicationClass,
     HasSpringBootPom,
@@ -82,6 +83,7 @@ export function machine(
 
     sdm.addExtensionPacks(
         SpringSupport,
+        codeMetrics(),
     );
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
