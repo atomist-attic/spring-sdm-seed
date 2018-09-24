@@ -97,7 +97,7 @@ export function machine(
         intent: "create spring",
         description: "Create a new Java Spring Boot REST service",
         parameters: SpringProjectCreationParameterDefinitions,
-        startingPoint: GitHubRepoRef.from({ owner: "atomist-seeds", repo: "spring-rest-seed", branch: "master" }),
+        startingPoint: GitHubRepoRef.from({ owner: "atomist-seeds", repo: "spring-rest", branch: "master" }),
         transform: [
             ReplaceReadmeTitle,
             SetAtomistTeamInApplicationYml,
