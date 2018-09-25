@@ -10,3 +10,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 -   Spring Boot SDM.
+-   Add Kotlin Spring Boot generator. [#24](https://github.com/atomist-seeds/spring-sdm/issues/24)
