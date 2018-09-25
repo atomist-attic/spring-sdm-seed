@@ -105,6 +105,19 @@ export function machine(
         ],
     });
 
+    sdm.addGeneratorCommand<SpringProjectCreationParameters>({
+        name: "create-kotlin-spring",
+        intent: "create kotlin spring",
+        description: "Create a new Kotlin Spring Boot REST service",
+        parameters: SpringProjectCreationParameterDefinitions,
+        startingPoint: GitHubRepoRef.from({ owner: "atomist-seeds", repo: "kotlin-rest", branch: "master" }),
+        transform: [
+            ReplaceReadmeTitle,
+            SetAtomistTeamInApplicationYml,
+            TransformSeedToCustomProject,
+        ],
+    });
+
     sdm.addCommand(ListBranchDeploys);
 
     // Manages a GitHub status check based on the current goals
