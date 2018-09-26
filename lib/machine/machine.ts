@@ -36,6 +36,7 @@ import {
 } from "@atomist/sdm-core";
 import { codeMetrics } from "@atomist/sdm-pack-sloc";
 import {
+    CloudNativeGitHubIssueRaisingReviewListener,
     HasSpringBootApplicationClass,
     HasSpringBootPom,
     IsMaven,
@@ -46,6 +47,7 @@ import {
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
     SpringProjectCreationParameters,
+    SpringStyleGitHubIssueRaisingReviewListener,
     springSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
@@ -61,20 +63,20 @@ export function machine(
             configuration,
         });
 
-    const autofixGoal = new Autofix().with(AddLicenseFile);
-    const inspectGoal = new AutoCodeInspection();
+    const autofix = new Autofix().with(AddLicenseFile);
+    const inspect = new AutoCodeInspection();
 
     const checkGoals = goals("checks")
-        .plan(inspectGoal)
+        .plan(inspect)
         .plan(new PushImpact())
-        .plan(autofixGoal);
+        .plan(autofix);
 
     const buildGoals = goals("build")
         .plan(new Build().with({ name: "Maven", builder: new MavenBuilder(sdm) }))
-        .after(autofixGoal);
+        .after(autofix);
 
     const deployGoals = goals("deploy")
-        .plan(new MavenPerBranchDeployment()).after(...buildGoals.goals);
+        .plan(new MavenPerBranchDeployment()).after(buildGoals);
 
     sdm.addGoalContributions(goalContributors(
         onAnyPush().setGoals(checkGoals),
@@ -84,10 +86,17 @@ export function machine(
 
     sdm.addExtensionPacks(
         springSupport({
-            inspectGoal,
-            autofixGoal,
-            review: {},
+            inspectGoal: inspect,
+            autofixGoal: autofix,
+            review: {
+                cloudNative: true,
+                springStyle: true,
+            },
             autofix: {},
+            reviewListeners: [
+                CloudNativeGitHubIssueRaisingReviewListener,
+                SpringStyleGitHubIssueRaisingReviewListener
+            ],
         }),
         codeMetrics(),
     );
