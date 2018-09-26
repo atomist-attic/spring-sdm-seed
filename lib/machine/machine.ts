@@ -95,7 +95,7 @@ export function machine(
             autofix: {},
             reviewListeners: [
                 CloudNativeGitHubIssueRaisingReviewListener,
-                SpringStyleGitHubIssueRaisingReviewListener
+                SpringStyleGitHubIssueRaisingReviewListener,
             ],
         }),
         codeMetrics(),
