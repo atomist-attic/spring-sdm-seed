@@ -17,7 +17,6 @@
 import {
     AutoCodeInspection,
     Autofix,
-    Build,
     GitHubRepoRef,
     goalContributors,
     goals,
@@ -31,6 +30,7 @@ import {
     createSoftwareDeliveryMachine,
     Version,
 } from "@atomist/sdm-core";
+import { Build } from "@atomist/sdm-pack-build";
 import {
     DockerBuild,
     HasDockerfile,
@@ -41,7 +41,7 @@ import {
 } from "@atomist/sdm-pack-k8";
 import {
     IsMaven,
-    MavenBuilder,
+    mavenBuilder,
     MavenProgressReporter,
     MavenProjectVersioner,
     MavenVersionPreparation,
@@ -49,7 +49,7 @@ import {
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
     SpringProjectCreationParameters,
-    SpringSupport,
+    springSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
 import { MavenPackage } from "../support/maven";
@@ -73,7 +73,7 @@ export function machine(
     const version = new Version().withVersioner(MavenProjectVersioner);
 
     const build = new Build().with({
-        builder: new MavenBuilder(sdm),
+        builder: mavenBuilder(),
         progressReporter: MavenProgressReporter,
     });
 
@@ -88,10 +88,10 @@ export function machine(
         .plan(version, autofix, new AutoCodeInspection(), new PushImpact());
 
     const BuildGoals = goals("build")
-        .plan(build).after(autofix, version);
+        .plan(build).after(BaseGoals);
 
     const DeployGoals = goals("deploy")
-        .plan(dockerBuild).after(build)
+        .plan(dockerBuild).after(BuildGoals)
         .plan(kubernetesDeploy).after(dockerBuild);
 
     sdm.addGoalContributions(goalContributors(
@@ -101,7 +101,10 @@ export function machine(
     ));
 
     sdm.addExtensionPacks(
-        SpringSupport,
+        springSupport({
+            autofix: {},
+            review: {},
+        }),
         kubernetesSupport(),
     );
 
