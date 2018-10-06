@@ -18,7 +18,6 @@ import {
     AutoCodeInspection,
     Autofix,
     AutofixRegistration,
-    Build,
     GitHubRepoRef,
     goalContributors,
     goals,
@@ -32,22 +31,23 @@ import {
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
+    isInLocalMode,
     summarizeGoalsInGitHubStatus,
 } from "@atomist/sdm-core";
+import { Build } from "@atomist/sdm-pack-build";
+import { SingleIssuePerCategoryManagingReviewListener } from "@atomist/sdm-pack-issue";
 import { codeMetrics } from "@atomist/sdm-pack-sloc";
 import {
-    CloudNativeGitHubIssueRaisingReviewListener,
     HasSpringBootApplicationClass,
     HasSpringBootPom,
     IsMaven,
     ListBranchDeploys,
-    MavenBuilder,
+    mavenBuilder,
     MavenPerBranchDeployment,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
     SpringProjectCreationParameters,
-    SpringStyleGitHubIssueRaisingReviewListener,
     springSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
@@ -72,7 +72,7 @@ export function machine(
         .plan(autofix);
 
     const buildGoals = goals("build")
-        .plan(new Build().with({ name: "Maven", builder: new MavenBuilder(sdm) }))
+        .plan(new Build().with({ name: "Maven", builder: mavenBuilder() }))
         .after(autofix);
 
     const deployGoals = goals("deploy")
@@ -93,9 +93,8 @@ export function machine(
                 springStyle: true,
             },
             autofix: {},
-            reviewListeners: [
-                CloudNativeGitHubIssueRaisingReviewListener,
-                SpringStyleGitHubIssueRaisingReviewListener,
+            reviewListeners: isInLocalMode() ? [] : [
+                SingleIssuePerCategoryManagingReviewListener,
             ],
         }),
         codeMetrics(),
