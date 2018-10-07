@@ -28,7 +28,7 @@
   "types": "./index.d.ts",
   "dependencies": {
     "@atomist/automation-client": "1.0.0-master.20181006002158",
-    "@atomist/sdm": "1.0.0-master.20181006100238",
+    "@atomist/sdm": "1.0.0-master.20181007092752",
     "@atomist/sdm-core": "1.0.0-master.20181006194507",
     "@atomist/sdm-pack-build": "1.0.0-master.20181006051418",
     "@atomist/sdm-pack-issue": "1.0.0-master.20181006205252",

@@ -72,7 +72,7 @@ export function machine(
         .plan(autofix);
 
     const buildGoals = goals("build")
-        .plan(new Build().with({ name: "Maven", builder: mavenBuilder() }))
+        .plan(new Build().with({ builder: mavenBuilder() }))
         .after(autofix);
 
     const deployGoals = goals("deploy")
