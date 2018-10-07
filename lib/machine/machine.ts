@@ -67,13 +67,12 @@ export function machine(
     const inspect = new AutoCodeInspection();
 
     const checkGoals = goals("checks")
-        .plan(inspect)
-        .plan(new PushImpact())
-        .plan(autofix);
+        .plan(autofix)
+        .plan(inspect, new PushImpact()).after(autofix);
 
     const buildGoals = goals("build")
         .plan(new Build().with({ builder: mavenBuilder() }))
-        .after(autofix);
+        .after(checkGoals);
 
     const deployGoals = goals("deploy")
         .plan(new MavenPerBranchDeployment()).after(buildGoals);
