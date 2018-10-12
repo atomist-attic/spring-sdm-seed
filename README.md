@@ -1,7 +1,11 @@
+<p align="center">
+  <img src="https://images.atomist.com/sdm/SDM-Logo-Dark.png">
+</p>
+
 # @atomist-seeds/spring-sdm
 
-[![atomist sdm goals](http://badge.atomist.com/T29E48P34/atomist/spring-sdm-seed/94b9a596-f882-4d42-9cc4-fcf70bd5b3db)](https://app.atomist.com/workspace/T29E48P34)
-[![npm version](https://img.shields.io/npm/v/@atomist/spring-sdm-seed.svg)](https://www.npmjs.com/package/@atomist/spring-sdm-seed)
+[![atomist sdm goals](http://badge.atomist.com/T29E48P34/atomist-seeds/spring-sdm/e187776c-b02e-424d-a05b-2b6c2f967010)](https://app.atomist.com/workspace/T29E48P34)
+[![npm version](https://img.shields.io/npm/v/@atomist-seeds/spring-sdm.svg)](https://www.npmjs.com/package/@atomist-seeds/spring-sdm)
 
 An [Atomist][atomist] software delivery machine (SDM) automating the
 creation, building, and delivery of [Spring][spring] and [Spring
@@ -10,49 +14,49 @@ Boot][spring-boot] applications.
 [spring]: https://spring.io/ (Spring)
 [spring-boot]: http://spring.io/projects/spring-boot (Spring Boot)
 
-See the [Atomist documentation][atomist-doc] for more information on
-what SDMs are and what they can do for you using the Atomist API for
-software.
+Software delivery machines enable you to control your delivery process
+in code.  Think of it as an API for your software delivery.  See the
+[Atomist documentation][atomist-doc] for more information on the
+concept of a software delivery machine and how to create and develop
+an SDM.
 
 [atomist-doc]: https://docs.atomist.com/ (Atomist Documentation)
 
-## Prerequisites
+## Getting started
 
-See the [Atomist Developer documentation][atomist-dev] for
-instructions on setting up your development environment.  Briefly, you
-will need [Git][git], [Node.js][node], and the [Atomist
-CLI][atomist-cli] installed and properly configured on your system.
-For this specific SDM, you will also need [Java][java] and
-[Maven][mvn] installed.  With these installed, you can run this SDM in
-local mode.
+See the [Developer Quick Start][atomist-quick] to jump straight to
+creating an SDM.
 
-To run this SDM for your team, you will need an Atomist workspace.
-See the [Atomist Getting Started Guide][atomist-start] for
-instructions on how to get an Atomist workspace and connect it to your
-source code repositories, continuous integration, chat platform, etc.
+[atomist-quick]: https://docs.atomist.com/quick-start/ (Atomist - Developer Quick Start)
 
-[atomist-dev]: https://docs.atomist.com/developer/prerequisites/ (Atomist - Developer Prerequisites)
-[git]: https://git-scm.com/ (Git)
-[atomist-cli]: https://github.com/atomist/cli (Atomist Command-Line Interface)
-[atomist-start]: https://docs.atomist.com/user/ (Atomist - Getting Started)
-[java]: http://openjdk.java.net/install/ (Java - Install)
-[mvn]: https://maven.apache.org/download.cgi (Maven - Install)
+## Contributing
 
-## Running
+Contributions to this project from community members are encouraged
+and appreciated. Please review the [Contributing
+Guidelines](CONTRIBUTING.md) for more information. Also see the
+[Development](#development) section in this document.
 
-See the [Atomist Developer documentation][atomist-dev] for details on
-how to run this SDM.  Briefly, once the prerequisites are met on your
-system you can start the SDM in local mode with the following command:
+## Code of conduct
 
-```
-$ atomist start --local
-```
+This project is governed by the [Code of
+Conduct](CODE_OF_CONDUCT.md). You are expected to act in accordance
+with this code by participating. Please report any unacceptable
+behavior to code-of-conduct@atomist.com.
 
-The Atomist documentation for [running SDMs][atomist-run] has
-instructions for connecting and SDM to the Atomist API for software
-and running an SDM in various environments.
+## Documentation
 
-[atomist-run]: https://docs.atomist.com/developer/run/ (Atomist - Running SDMs)
+Please see [docs.atomist.com][atomist-doc] for
+[developer][atomist-doc-sdm] documentation.
+
+[atomist-doc-sdm]: https://docs.atomist.com/developer/sdm/ (Atomist Documentation - SDM Developer)
+
+## Connect
+
+Follow [@atomist][atomist-twitter] and [The Composition][atomist-blog]
+blog related to SDM.
+
+[atomist-twitter]: https://twitter.com/atomist (Atomist on Twitter)
+[atomist-blog]: https://the-composition.com/ (The Composition - The Official Atomist Blog)
 
 ## Support
 
@@ -61,7 +65,7 @@ channel in the [Atomist community Slack workspace][slack].
 
 If you find a problem, please create an [issue][].
 
-[issue]: https://github.com/atomist/spring-sdm-seed/issues
+[issue]: https://github.com/atomist-seeds/spring-sdm/issues
 
 ## Development
 
