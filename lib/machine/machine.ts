@@ -43,6 +43,7 @@ import {
     IsMaven,
     ListBranchDeploys,
     mavenBuilder,
+    MavenDefaultOptions,
     MavenPerBranchDeployment,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
@@ -71,7 +72,7 @@ export function machine(
         .plan(inspect, new PushImpact()).after(autofix);
 
     const buildGoals = goals("build")
-        .plan(new Build().with({ builder: mavenBuilder() }))
+        .plan(new Build().with({ ...MavenDefaultOptions, builder: mavenBuilder() }))
         .after(checkGoals);
 
     const deployGoals = goals("deploy")
