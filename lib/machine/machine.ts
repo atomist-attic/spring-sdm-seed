@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
+import { GitHubRepoRef } from "@atomist/automation-client";
 import {
     AutoCodeInspection,
     Autofix,
     AutofixRegistration,
-    GitHubRepoRef,
     goalContributors,
     goals,
     hasFile,
@@ -32,10 +32,10 @@ import {
 import {
     createSoftwareDeliveryMachine,
     isInLocalMode,
-    summarizeGoalsInGitHubStatus,
+    pack,
 } from "@atomist/sdm-core";
 import { Build } from "@atomist/sdm-pack-build";
-import { SingleIssuePerCategoryManagingReviewListener } from "@atomist/sdm-pack-issue";
+import { singleIssuePerCategoryManaging } from "@atomist/sdm-pack-issue";
 import { codeMetrics } from "@atomist/sdm-pack-sloc";
 import {
     HasSpringBootApplicationClass,
@@ -93,10 +93,11 @@ export function machine(
             },
             autofix: {},
             reviewListeners: isInLocalMode() ? [] : [
-                SingleIssuePerCategoryManagingReviewListener,
+                singleIssuePerCategoryManaging("sdm-pack-spring"),
             ],
         }),
         codeMetrics(),
+        pack.githubGoalStatus.GitHubGoalStatus,
     );
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
@@ -126,9 +127,6 @@ export function machine(
     });
 
     sdm.addCommand(ListBranchDeploys);
-
-    // Manages a GitHub status check based on the current goals
-    summarizeGoalsInGitHubStatus(sdm);
 
     return sdm;
 }
