@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { GitHubRepoRef } from "@atomist/automation-client";
 import {
     AutoCodeInspection,
     Autofix,
-    GitHubRepoRef,
     goalContributors,
     goals,
     onAnyPush,
@@ -28,6 +28,7 @@ import {
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
+    isInLocalMode,
     Version,
 } from "@atomist/sdm-core";
 import { Build } from "@atomist/sdm-pack-build";
@@ -35,6 +36,7 @@ import {
     DockerBuild,
     HasDockerfile,
 } from "@atomist/sdm-pack-docker";
+import { singleIssuePerCategoryManaging } from "@atomist/sdm-pack-issue";
 import {
     KubernetesDeploy,
     kubernetesSupport,
@@ -42,9 +44,10 @@ import {
 import {
     IsMaven,
     mavenBuilder,
-    MavenProgressReporter,
+    MavenDefaultOptions,
     MavenProjectVersioner,
-    MavenVersionPreparation,
+    MvnPackage,
+    MvnVersion,
     ReplaceReadmeTitle,
     SetAtomistTeamInApplicationYml,
     SpringProjectCreationParameterDefinitions,
@@ -52,7 +55,6 @@ import {
     springSupport,
     TransformSeedToCustomProject,
 } from "@atomist/sdm-pack-spring";
-import { MavenPackage } from "../support/maven";
 import {
     AddDockerfileAutofix,
     AddDockerfileTransform,
@@ -65,27 +67,30 @@ export function machine(
 
     const sdm: SoftwareDeliveryMachine = createSoftwareDeliveryMachine(
         {
-            name: "Spring software delivery machine",
+            name: "Spring Software Delivery Machine",
             configuration,
         });
 
     const autofix = new Autofix().with(AddDockerfileAutofix);
     const version = new Version().withVersioner(MavenProjectVersioner);
+    const codeInspection = new AutoCodeInspection();
 
     const build = new Build().with({
-        builder: mavenBuilder(),
-        progressReporter: MavenProgressReporter,
-    });
+            ...MavenDefaultOptions,
+            builder: mavenBuilder(),
+        });
 
     const dockerBuild = new DockerBuild().with({
-        preparations: [MavenVersionPreparation, MavenPackage],
-        options: { push: false },
-    });
+            ...MavenDefaultOptions,
+            options: { push: false },
+        })
+        .withProjectListener(MvnVersion)
+        .withProjectListener(MvnPackage);
 
     const kubernetesDeploy = new KubernetesDeploy({ environment: "testing" });
 
     const BaseGoals = goals("checks")
-        .plan(version, autofix, new AutoCodeInspection(), new PushImpact());
+        .plan(version, autofix, codeInspection, new PushImpact());
 
     const BuildGoals = goals("build")
         .plan(build).after(BaseGoals);
@@ -102,8 +107,19 @@ export function machine(
 
     sdm.addExtensionPacks(
         springSupport({
-            autofix: {},
-            review: {},
+            inspectGoal: codeInspection,
+            autofixGoal: autofix,
+            review: {
+                cloudNative: true,
+                springStyle: true,
+            },
+            autofix: {
+                springStyle: true,
+                cloudNative: true,
+            },
+            reviewListeners: isInLocalMode() ? [] : [
+                singleIssuePerCategoryManaging("sdm-pack-spring"),
+            ],
         }),
         kubernetesSupport(),
     );
