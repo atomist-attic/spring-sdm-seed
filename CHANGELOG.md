@@ -11,3 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 -   Spring Boot SDM.
 -   Add Kotlin Spring Boot generator. [#24](https://github.com/atomist-seeds/spring-sdm/issues/24)
+
+### Changed
+
+-   Move configuration to index.ts. [#31](https://github.com/atomist-seeds/spring-sdm/issues/31)
