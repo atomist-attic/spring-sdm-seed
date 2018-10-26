@@ -32,7 +32,8 @@ import {
 import {
     createSoftwareDeliveryMachine,
     isInLocalMode,
-    pack,
+    gitHubGoalStatus,
+    goalState,
 } from "@atomist/sdm-core";
 import { Build } from "@atomist/sdm-pack-build";
 import { singleIssuePerCategoryManaging } from "@atomist/sdm-pack-issue";
@@ -73,7 +74,7 @@ export function machine(
 
     const buildGoals = goals("build")
         .plan(new Build().with({ ...MavenDefaultOptions, builder: mavenBuilder() }))
-        .after(checkGoals);
+        .after(autofix);
 
     const deployGoals = goals("deploy")
         .plan(new MavenPerBranchDeployment()).after(buildGoals);
@@ -98,7 +99,8 @@ export function machine(
             ],
         }),
         codeMetrics(),
-        pack.githubGoalStatus.GitHubGoalStatus,
+        goalState(),
+        gitHubGoalStatus(),
     );
 
     sdm.addGeneratorCommand<SpringProjectCreationParameters>({
