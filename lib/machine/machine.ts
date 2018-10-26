@@ -31,9 +31,9 @@ import {
 } from "@atomist/sdm";
 import {
     createSoftwareDeliveryMachine,
-    isInLocalMode,
     gitHubGoalStatus,
     goalState,
+    isInLocalMode,
 } from "@atomist/sdm-core";
 import { Build } from "@atomist/sdm-pack-build";
 import { singleIssuePerCategoryManaging } from "@atomist/sdm-pack-issue";
