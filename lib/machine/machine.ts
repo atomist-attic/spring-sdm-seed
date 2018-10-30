@@ -79,11 +79,11 @@ export function machine(
     const deployGoals = goals("deploy")
         .plan(new MavenPerBranchDeployment()).after(buildGoals);
 
-    sdm.addGoalContributions(goalContributors(
+    sdm.withPushRules(
         onAnyPush().setGoals(checkGoals),
         whenPushSatisfies(IsMaven).setGoals(buildGoals),
         whenPushSatisfies(HasSpringBootPom, HasSpringBootApplicationClass, IsMaven).setGoals(deployGoals),
-    ));
+    );
 
     sdm.addExtensionPacks(
         springSupport({
