@@ -15,3 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 -   Move configuration to index.ts. [#31](https://github.com/atomist-seeds/spring-sdm/issues/31)
+
+### Security
+
+-   Update npm-run-all dependency. [#36](https://github.com/atomist-seeds/spring-sdm/issues/36)
