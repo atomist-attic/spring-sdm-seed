@@ -19,3 +19,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Security
 
 -   Update npm-run-all dependency. [#36](https://github.com/atomist-seeds/spring-sdm/issues/36)
+-   Update npm-run-all dependency. [#35](https://github.com/atomist-seeds/spring-sdm/issues/35)
