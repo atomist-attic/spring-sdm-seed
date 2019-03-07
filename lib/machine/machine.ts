@@ -67,10 +67,11 @@ export function machine(
 
     const autofix = new Autofix().with(AddLicenseFile);
     const inspect = new AutoCodeInspection();
+    const pushImpact = new PushImpact();
 
     const checkGoals = goals("checks")
         .plan(autofix)
-        .plan(inspect, new PushImpact()).after(autofix);
+        .plan(inspect, pushImpact).after(autofix);
 
     const buildGoals = goals("build")
         .plan(new Build().with({ ...MavenDefaultOptions, builder: mavenBuilder() }))
